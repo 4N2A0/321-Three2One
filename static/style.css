@@ -1,0 +1,77 @@
+/* Basic styling for the guess‑the‑link game */
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+    color: #333;
+}
+
+header, footer {
+    text-align: center;
+    padding: 1rem;
+    background-color: #f5f5f5;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+}
+
+.category-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.clues {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.clue img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button {
+    display: inline-block;
+    padding: 0.7rem 1.2rem;
+    margin: 1rem auto;
+    background-color: #007bff;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+.credit {
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 2rem;
+}
+
+/* Themes (you can add more) */
+.theme-fun {
+    background-color: #fcfcff;
+    color: #333;
+}
+.theme-fun header,
+.theme-fun footer {
+    background-color: #e9f2ff;
+}
