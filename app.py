@@ -3,7 +3,7 @@ import os
 import random
 from pathlib import Path
 
-from flask import Flask, render_template, redirect, url_for, request, abort, session
+from flask import Flask, render_template, redirect, url_for, request, abort
 
 
 def load_puzzles(puzzles_path: str) -> list[dict]:
@@ -13,64 +13,48 @@ def load_puzzles(puzzles_path: str) -> list[dict]:
 
 def build_app(puzzles: list[dict]) -> Flask:
     app = Flask(__name__)
-
-    # Required for Flask sessions (used for non-repeating Random order)
     app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
     categories = sorted(set(p["category"] for p in puzzles))
 
     @app.route("/", methods=["GET", "POST"])
     def index():
-        # POST from category switcher -> start chosen category
+        """
+        Default behavior:
+        - Start immediately in Random mode (no category page).
+        - If user submits the category form (POST), go to that category.
+        - If user explicitly wants the category chooser page: /?choose=1
+        """
         if request.method == "POST":
             category = request.form.get("category", "Random")
-            return redirect(url_for("game", category=category, idx=0, reveal=0))
+            return redirect(url_for("play", category=category))
 
-        # Optional category-selection page
         if request.args.get("choose") == "1":
             return render_template("index.html", categories=categories)
 
-        # Default behaviour: start game immediately in Random mode
-        return redirect(url_for("game", category="Random", idx=0, reveal=0))
+        return redirect(url_for("play", category="Random"))
 
-    @app.route("/game/<category>/<int:idx>/<int:reveal>")
-    def game(category: str, idx: int, reveal: int):
-        puzzles_in_category = puzzles if category == "Random" else [p for p in puzzles if p["category"] == category]
+    @app.route("/play/<category>")
+    def play(category: str):
+        """
+        Single-page game:
+        - Render one HTML page
+        - Embed puzzles (filtered by category) as JSON
+        - JS handles reveal/next/restart instantly without navigation
+        """
+        if category == "Random":
+            puzzles_in_category = puzzles[:]  # all puzzles
+        else:
+            puzzles_in_category = [p for p in puzzles if p["category"] == category]
+
         if not puzzles_in_category:
             abort(404, description=f"No puzzles found in category: {category}")
 
-        reset = request.args.get("reset") == "1"
-
-        # Random: shuffle once, cycle through all before repeating
-        if category == "Random":
-            key = "order_random"
-            if reset or key not in session or len(session[key]) != len(puzzles_in_category):
-                order = list(range(len(puzzles_in_category)))
-                random.shuffle(order)
-                session[key] = order
-
-            order = session[key]
-            current_pos = idx % len(order)
-            puzzle = puzzles_in_category[order[current_pos]]
-
-            is_last = (current_pos == len(order) - 1)
-            next_idx = 0 if is_last else (current_pos + 1)
-        else:
-            current_pos = idx % len(puzzles_in_category)
-            puzzle = puzzles_in_category[current_pos]
-
-            is_last = (current_pos == len(puzzles_in_category) - 1)
-            next_idx = 0 if is_last else (current_pos + 1)
-
         return render_template(
-            "game.html",
-            puzzle=puzzle,
-            category=category,
+            "play.html",
             categories=categories,
-            current_idx=current_pos,
-            next_idx=next_idx,
-            is_last=is_last,
-            reveal=bool(reveal),
+            category=category,
+            puzzles=puzzles_in_category,
         )
 
     return app
@@ -83,7 +67,6 @@ def create_app() -> Flask:
 
 
 app = create_app()
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>321: Three 2 One</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="theme-fun">
+  <div class="page">
+    <header class="topbar">
+      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="321: Three 2 One">
+    </header>
+
+    <main class="stage">
+      <div class="category-row">
+        <!-- Switcher (left) -->
+        <form class="category-switch" method="post" action="{{ url_for('index') }}">
+          <label for="category-select" class="sr-only">Category</label>
+          <select id="category-select" name="category" onchange="this.form.submit()">
+            <option value="Random" {% if category == "Random" %}selected{% endif %}>Random</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+          <noscript>
+            <button class="button small" type="submit">Switch</button>
+          </noscript>
+        </form>
+
+        <!-- Badge (right) -->
+        <div class="category-badge" id="categoryBadge">{{ category }}</div>
+      </div>
+
+      <div class="clues" id="clues">
+        <!-- 3 clue cards (reused each puzzle; no page reload) -->
+        <div class="clue">
+          <div class="clue-media">
+            <img id="img0" alt="Clue 1">
+            <div class="clue-overlay" id="exp0"></div>
+          </div>
+        </div>
+
+        <div class="clue">
+          <div class="clue-media">
+            <img id="img1" alt="Clue 2">
+            <div class="clue-overlay" id="exp1"></div>
+          </div>
+        </div>
+
+        <div class="clue">
+          <div class="clue-media">
+            <img id="img2" alt="Clue 3">
+            <div class="clue-overlay" id="exp2"></div>
+          </div>
+        </div>
+      </div>
+
+      <section class="action-area">
+        <div class="answer-slot">
+          <h2 class="answer-heading" id="answerHeading"></h2>
+        </div>
+
+        <div class="buttons-row">
+          <button class="button reveal-button" id="revealBtn">Reveal Answer</button>
+          <button class="button next-button" id="nextBtn">Next Puzzle</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p class="credit">Created with Flask – puzzles from <code>puzzles.json</code>.</p>
+    </footer>
+  </div>
+
+  <script>
+    // Puzzles embedded once. No extra requests for reveal/next.
+    const PUZZLES = {{ puzzles|tojson }};
+    const MODE = "{{ category }}"; // "Random" or specific category
+
+    // DOM
+    const imgEls = [document.getElementById('img0'), document.getElementById('img1'), document.getElementById('img2')];
+    const expEls = [document.getElementById('exp0'), document.getElementById('exp1'), document.getElementById('exp2')];
+    const answerHeading = document.getElementById('answerHeading');
+    const revealBtn = document.getElementById('revealBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // Random non-repeat order
+    let order = [];
+    let pos = 0;
+    let revealed = false;
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function buildOrder() {
+      order = [...Array(PUZZLES.length).keys()];
+      if (MODE === "Random") shuffle(order);
+      pos = 0;
+    }
+
+    function setRevealState(on) {
+      revealed = on;
+      document.body.classList.toggle('reveal-on', on);
+
+      // Keep placeholders stable (no layout shift)
+      if (on) {
+        answerHeading.textContent = "Answer: " + currentPuzzle().answer;
+        nextBtn.style.display = "inline-flex";
+        revealBtn.style.display = "none";
+      } else {
+        answerHeading.textContent = ""; // reserved height stays via CSS
+        nextBtn.style.display = "none";
+        revealBtn.style.display = "inline-flex";
+      }
+    }
+
+    function currentPuzzle() {
+      return PUZZLES[order[pos]];
+    }
+
+    function preloadPuzzle(p) {
+      // Preload images for smoother next
+      (p.clues || []).forEach(path => {
+        const im = new Image();
+        im.src = "{{ url_for('static', filename='') }}" + path;
+      });
+    }
+
+    function renderPuzzle() {
+      const p = currentPuzzle();
+
+      // Images
+      for (let i = 0; i < 3; i++) {
+        const path = p.clues[i] || "";
+        imgEls[i].src = "{{ url_for('static', filename='') }}" + path;
+      }
+
+      // Explanations live in overlay; they appear only in reveal mode (CSS)
+      for (let i = 0; i < 3; i++) {
+        expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
+      }
+
+      // Reset reveal state for new puzzle
+      setRevealState(false);
+
+      // Button label: Restart at end of cycle (Random and non-random)
+      const atEnd = (pos === order.length - 1);
+      nextBtn.textContent = atEnd ? "Restart" : "Next Puzzle";
+
+      // Preload next puzzle images (cache warm)
+      const nextPos = atEnd ? 0 : (pos + 1);
+      preloadPuzzle(PUZZLES[order[nextPos]]);
+    }
+
+    revealBtn.addEventListener('click', () => {
+      setRevealState(true);
+    });
+
+    nextBtn.addEventListener('click', () => {
+      const atEnd = (pos === order.length - 1);
+
+      if (atEnd) {
+        // Restart: reshuffle in Random mode, else restart from beginning
+        buildOrder();
+      } else {
+        pos += 1;
+      }
+      renderPuzzle();
+    });
+
+    // Init
+    buildOrder();
+    renderPuzzle();
+  </script>
+</body>
+</html>
