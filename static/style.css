@@ -1,0 +1,286 @@
+/* Full-viewport, no-scroll layout */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #233044;
+  background: linear-gradient(135deg, #fdfcff 0%, #e7f3ff 100%);
+  height: 100vh;
+  overflow: hidden; /* no page scroll */
+}
+
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top logo area */
+.topbar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 2.2rem 0.8rem 0.6rem; /* space above logo */
+}
+
+.logo {
+  width: 320px; /* ~250% bigger than the original 180px */
+  max-width: 88vw;
+  height: auto;
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,0.14));
+}
+
+/* Center stage */
+.stage {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.6rem 0.8rem 8rem;
+}
+
+/* Category row */
+.category-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
+
+.category-badge,
+.category-switch select {
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.category-badge {
+  padding: 0 0.95rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #3b5998;
+  background: rgba(238, 245, 255, 0.95);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(59, 89, 152, 0.16);
+}
+
+.category-switch select,
+.category-form select {
+  appearance: none;
+  padding: 0 1.0rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(44, 62, 80, 0.18);
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  font-weight: 800;
+  color: #2c3e50;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.category-switch select:hover,
+.category-form select:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(0,0,0,0.12);
+}
+
+/* Clues container */
+.clues {
+  width: min(94%, 1265px);
+  padding: 1rem;
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.10);
+
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.4rem;
+
+  /* Fit within viewport without scroll */
+  max-height: 58vh;
+  overflow: hidden;
+}
+
+.clue {
+  flex: 1 1 30%;
+  min-width: 240px;
+  display: flex;
+  justify-content: center;
+}
+
+.clue-media {
+  width: 100%;
+  position: relative;
+  border-radius: 0.95rem;
+  overflow: hidden;
+}
+
+/* Responsive, fixed-size feel */
+.clue-media img {
+  width: 100%;
+  height: clamp(240px, 34vh, 520px);
+  object-fit: cover;
+  display: block;
+  border-radius: 0.95rem;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.14);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clue-media img:hover {
+  transform: scale(1.03);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+}
+
+/* Overlay explanation (no layout shift) */
+.clue-overlay {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.8rem;
+  background: rgba(15, 20, 30, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255,255,255,0.95);
+  font-size: 0.92rem;
+  line-height: 1.3;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+
+.reveal-on .clue-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Action area */
+.action-area {
+  width: min(94%, 1265px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.answer-slot {
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.answer-heading {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #233044;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.reveal-on .answer-heading {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.buttons-row {
+  display: flex;
+  gap: 0.9rem;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 1.65rem;
+  border: none;
+  border-radius: 0.85rem;
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.20);
+  filter: brightness(1.02);
+}
+
+.reveal-button { background: #6f42c1; }
+.reveal-button:hover { background: #59359e; }
+
+.next-button { background: #20c997; display: none; }
+.next-button:hover { background: #17a589; }
+
+.reveal-on .next-button { display: inline-flex; }
+.reveal-on .reveal-button { display: none; }
+
+.small { padding: 0.6rem 0.95rem; font-size: 0.9rem; }
+
+/* Footer */
+.footer {
+  width: 100%;
+  text-align: center;
+  padding: 0.7rem 0.7rem;
+  color: #667;
+}
+
+.credit { margin: 0; font-size: 0.75rem; opacity: 0.9; }
+
+/* Accessibility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .clues { max-height: 56vh; }
+  .clue-media img { height: clamp(220px, 30vh, 440px); }
+}
+
+@media (max-width: 600px) {
+  .logo { width: 320px; }
+  .clues { max-height: 54vh; padding: 0.8rem; }
+  .clue-media img { height: clamp(200px, 28vh, 380px); }
+  .buttons-row { flex-direction: column; gap: 0.7rem; }
+}
+
+@media (max-height: 780px) {
+  .topbar { padding: 1.6rem 0.8rem 0.4rem; }
+  .logo { width: 360px; }
+  .clues { max-height: 54vh; }
+  .clue-media img { height: clamp(200px, 30vh, 420px); }
+}
+
+@media (max-height: 650px) {
+  .topbar { padding: 1.2rem 0.8rem 0.2rem; }
+  .logo { width: 300px; }
+  .stage { gap: 0.7rem; }
+  .clues { max-height: 50vh; }
+  .clue-media img { height: clamp(180px, 28vh, 360px); }
+  .answer-slot { min-height: 1.8rem; }
+}
