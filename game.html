@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guess the Link – {{ puzzle.category }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="theme-fun">
+    <header>
+        <h1>Category: {{ puzzle.category }}</h1>
+    </header>
+
+    <main>
+        <div class="clues">
+            {% for img in puzzle.clues %}
+            <div class="clue">
+                <img src="{{ url_for('static', filename=img) }}" alt="Clue {{ loop.index }}">
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if reveal %}
+        <section class="answer-section">
+            <h2>Answer: {{ puzzle.answer }}</h2>
+            <ul class="explanations">
+                {% for explanation in puzzle.explanations %}
+                <li>{{ explanation }}</li>
+                {% endfor %}
+            </ul>
+            <a class="button next-button" href="{{ url_for('game', category=category, idx=idx, reveal=0) }}">Next Puzzle</a>
+        </section>
+        {% else %}
+        <section class="reveal-section">
+            <button class="button reveal-button" onclick="window.location.href='{{ url_for('game', category=category, idx=idx, reveal=1) }}'">Reveal Answer</button>
+        </section>
+        {% endif %}
+    </main>
+
+    <footer>
+        <p class="credit">Created with Flask – puzzles from <code>puzzles.json</code>.</p>
+    </footer>
+</body>
+</html>
