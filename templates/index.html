@@ -1,21 +1,32 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Guess the Link – Start</title>
+    <title>Guess the Link</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="theme-fun">
-    <h1>Guess the Link</h1>
-    <p>Pick a category or let us surprise you:</p>
-    <form method="POST">
-        <select name="category">
-            <option value="Random">Random</option>
-            {% for cat in categories %}
-            <option value="{{ cat }}">{{ cat }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Start Game</button>
-    </form>
+    <header>
+        <h1>Guess the Link</h1>
+        <p>Select a category to start playing. You can also choose "Random" to mix things up!</p>
+    </header>
+
+    <main>
+        <form method="post" class="category-form">
+            <label for="category-select">Choose a category:</label>
+            <select id="category-select" name="category">
+                <option value="Random">Random</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Start Game</button>
+        </form>
+    </main>
+
+    <footer>
+        <p class="credit">Created with Flask – customize puzzles in <code>puzzles.json</code>.</p>
+    </footer>
 </body>
 </html>
