@@ -1,0 +1,44 @@
+[
+  {
+    "category": "Funny",
+    "clues": [
+      "static/images/clue1.jpg",
+      "static/images/clue2.jpg",
+      "static/images/clue3.jpg"
+    ],
+    "answer": "Banana Bread",
+    "explanations": [
+      "Clue 1 shows a bunch of bananas.",
+      "Clue 2 is a loaf of bread.",
+      "Clue 3 is a picture of someone slipping (a banana peel gag)."
+    ]
+  },
+  {
+    "category": "Stream",
+    "clues": [
+      "static/images/clue4.jpg",
+      "static/images/clue5.jpg",
+      "static/images/clue6.jpg"
+    ],
+    "answer": "Banana Bread",
+    "explanations": [
+      "Clue 1 shows a bunch of bananas.",
+      "Clue 2 is a loaf of bread.",
+      "Clue 3 is a picture of someone slipping (a banana peel gag)."
+    ]
+  },
+  {
+    "category": "Funny",
+    "clues": [
+      "static/images/clue1.jpg",
+      "static/images/clue4.jpg",
+      "static/images/clue2.jpg"
+    ],
+    "answer": "Test",
+    "explanations": [
+      "Clue 1 shows a bunch of bananas.",
+      "Clue 2 is a loaf of bread.",
+      "Clue 3 is a picture of someone slipping (a banana peel gag)."
+    ]
+  }
+]

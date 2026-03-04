@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guess the Link – Start</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="theme-fun">
+    <h1>Guess the Link</h1>
+    <p>Pick a category or let us surprise you:</p>
+    <form method="POST">
+        <select name="category">
+            <option value="Random">Random</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Start Game</button>
+    </form>
+</body>
+</html>
