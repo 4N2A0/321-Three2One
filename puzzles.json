@@ -1,0 +1,30 @@
+[
+  {
+    "category": "Funny",
+    "clues": [
+      "images/clue1.jpg",
+      "images/clue2.jpg",
+      "images/clue3.jpg"
+    ],
+    "answer": "Example Answer",
+    "explanations": [
+      "This is the explanation for the first clue.",
+      "This explains how the second image relates to the answer.",
+      "This is the connection from the third picture."
+    ]
+  },
+  {
+    "category": "Country",
+    "clues": [
+      "images/clue4.jpg",
+      "images/clue5.jpg",
+      "images/clue6.jpg"
+    ],
+    "answer": "Another Answer",
+    "explanations": [
+      "Explanation for the first clue of the second puzzle.",
+      "Explanation for the second clue of the second puzzle.",
+      "Explanation for the third clue of the second puzzle."
+    ]
+  }
+]
