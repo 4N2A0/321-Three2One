@@ -1,32 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Guess the Link</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <title>321: Three 2 One</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="theme-fun">
-    <header>
-        <h1>Guess the Link</h1>
-        <p>Select a category to start playing. You can also choose "Random" to mix things up!</p>
+  <div class="page">
+    <header class="topbar">
+      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="Game logo">
     </header>
 
-    <main>
-        <form method="post" class="category-form">
-            <label for="category-select">Choose a category:</label>
-            <select id="category-select" name="category">
-                <option value="Random">Random</option>
-                {% for cat in categories %}
-                <option value="{{ cat }}">{{ cat }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit">Start Game</button>
-        </form>
+    <main class="stage">
+      <form method="post" class="category-form">
+        <label for="category-select">Choose a category:</label>
+        <select id="category-select" name="category">
+          <option value="Random">Random</option>
+          {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+          {% endfor %}
+        </select>
+        <button class="button reveal-button" type="submit">Start</button>
+      </form>
     </main>
 
-    <footer>
-        <p class="credit">Created with Flask – customize puzzles in <code>puzzles.json</code>.</p>
+    <footer class="footer">
+      <p class="credit">Created by 420TN</code>.</p>
     </footer>
+  </div>
 </body>
 </html>

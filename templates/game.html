@@ -1,44 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Guess the Link – {{ puzzle.category }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <title>321: Three 2 One – {{ puzzle.category }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="theme-fun">
-    <header>
-        <h1>Category: {{ puzzle.category }}</h1>
+
+<body class="theme-fun {% if reveal %}reveal-on{% endif %}">
+  <div class="page">
+    <header class="topbar">
+      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="Game logo">
     </header>
 
-    <main>
-        <div class="clues">
-            {% for img in puzzle.clues %}
-            <div class="clue">
-                <img src="{{ url_for('static', filename=img) }}" alt="Clue {{ loop.index }}">
-            </div>
+    <main class="stage">
+      <div class="category-row">
+        <form class="category-switch" method="post" action="{{ url_for('index') }}">
+          <label for="category-select" class="sr-only">Category</label>
+          <select id="category-select" name="category" onchange="this.form.submit()">
+            <option value="Random" {% if category == "Random" %}selected{% endif %}>Random</option>
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
             {% endfor %}
+          </select>
+          <noscript>
+            <button class="button small" type="submit">Switch</button>
+          </noscript>
+        </form>
+
+        <div class="category-badge">{{ puzzle.category }}</div>
+      </div>
+
+      <div class="clues">
+        {% for img in puzzle.clues %}
+          <div class="clue">
+            <div class="clue-media">
+              <img src="{{ url_for('static', filename=img) }}" alt="Clue {{ loop.index }}">
+              <div class="clue-overlay">{{ puzzle.explanations[loop.index0] }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <section class="action-area">
+        <div class="answer-slot">
+          <h2 class="answer-heading">Answer: {{ puzzle.answer }}</h2>
         </div>
 
-        {% if reveal %}
-        <section class="answer-section">
-            <h2>Answer: {{ puzzle.answer }}</h2>
-            <ul class="explanations">
-                {% for explanation in puzzle.explanations %}
-                <li>{{ explanation }}</li>
-                {% endfor %}
-            </ul>
-            <a class="button next-button" href="{{ url_for('game', category=category, idx=idx, reveal=0) }}">Next Puzzle</a>
-        </section>
-        {% else %}
-        <section class="reveal-section">
-            <button class="button reveal-button" onclick="window.location.href='{{ url_for('game', category=category, idx=idx, reveal=1) }}'">Reveal Answer</button>
-        </section>
-        {% endif %}
+        <div class="buttons-row">
+          <button class="button reveal-button"
+            onclick="window.location.href='{{ url_for('game', category=category, idx=current_idx, reveal=1) }}'">
+            Reveal Answer
+          </button>
+
+          <a class="button next-button"
+             href="{% if is_last and category == 'Random' %}
+                      {{ url_for('game', category=category, idx=0, reveal=0, reset=1) }}
+                    {% else %}
+                      {{ url_for('game', category=category, idx=next_idx, reveal=0) }}
+                    {% endif %}">
+            {% if is_last and category == 'Random' %}↻  Restart{% else %}Next{% endif %}
+          </a>
+        </div>
+      </section>
     </main>
 
-    <footer>
-        <p class="credit">Created with Flask – puzzles from <code>puzzles.json</code>.</p>
+    <footer class="footer">
+      <p class="credit">Created by 420TN</p>
     </footer>
+  </div>
 </body>
 </html>
