@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>321: Three 2 One</title>
+  <title>Three 2 One</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='ico.png') }}">
@@ -10,6 +10,8 @@
 </head>
 
 <body class="theme-fun">
+  {% set SHOW_LANDING = show_landing|default(false) %}
+
   <!-- Loader -->
   <div id="loader" class="loader show" aria-hidden="true">
     <div class="loader-card">
@@ -23,14 +25,53 @@
     🌙
   </button>
 
+  <!-- Landing overlay (same page, no navigation) -->
+  <div id="landing" class="landing-overlay {% if not SHOW_LANDING %}hidden{% endif %}" aria-hidden="{% if SHOW_LANDING %}false{% else %}true{% endif %}">
+    <div class="landing-card answer-card visible">
+      <br>
+      <div class="answer-label">321: THREE CLUES 2 ONE CONNECTION</div>
+
+
+      <div class="landing-title">Don't Be Dumb</div>
+
+      <div class="landing-flow" aria-hidden="true">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      <div class="arrow">→</div>
+      <div class="one">🔗</div>
+    </div>
+      <ul class="landing-bullets">
+        <li>Keyboard Shortcuts:</li>
+
+      </ul>
+       <div class="landing-sub">Space = Reveal → Got it → Undo</div>
+    <div class="landing-sub">Arrow keys = Previous, Next (after reveal)</div>
+
+<br>
+      <div class="buttons-row nav-3 landing-actions">
+        <button class="button reveal-button" id="startBtn" type="button">Start</button>
+        <button class="button next-button" id="openCatBtn" type="button">Category</button>
+      </div>
+<br>
+      <div id="landingCats" class="landing-cats hidden">
+        <div class="landing-cats-row">
+          <button class="button nav-button" data-cat="Random" type="button">Random</button>
+          {% for cat in categories %}
+            <button class="button nav-button" data-cat="{{ cat }}" type="button">{{ cat }}</button>
+          {% endfor %}
+        </div>
+        <div class="landing-note">Changing category reloads the page.</div>
+      </div>
+    </div>
+  </div>
+
   <div class="page">
     <header class="topbar">
       <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="321: Three 2 One">
     </header>
 
     <header class="topbar">
-<h5 style="text-align: center;">Three clues. One connection. Can you see it?</h5>
-   </header>
+      <h5 style="text-align: center;">Three clues to one connection. Don't be dumb.</h5>
+    </header>
 
     <main class="stage">
       <!-- Category dropdown -->
@@ -83,15 +124,25 @@
           </div>
         </div>
 
-        <!-- Prev / Reveal / Next -->
-        <div class="buttons-row nav-3">
-          <button class="button nav-button prev-button" id="prevBtn" type="button">← Prev</button>
-          <button class="button reveal-button" id="revealBtn" type="button">Reveal</button>
-          <button class="button next-button" id="nextBtn" type="button">Next →</button>
+        <!-- Counter alone (top) -->
+        <div class="progress-row progress-top">
+          <div class="progress-pill" id="progressPill">1 / {{ puzzles|length }}</div>
         </div>
 
-        <div class="progress-row">
-          <div class="progress-pill" id="progressPill">1 / {{ puzzles|length }}</div>
+        <!-- Prev / Reveal / Next -->
+        <div class="buttons-row nav-3">
+          <button class="button nav-button prev-button" id="prevBtn" type="button" disabled>← Prev</button>
+          <button class="button reveal-button" id="revealBtn" type="button">Reveal</button>
+          <button class="button next-button next-primary" id="nextBtn" type="button" disabled>Next →</button>
+        </div>
+
+        <!-- Streak row: (Got it) + streak + best -->
+        <div class="progress-row progress-bottom">
+          <button class="button next-button small gotit-inline" id="gotItBtn" type="button" disabled>
+            I got it
+          </button>
+          <div class="progress-pill" id="streakPill">Streak: 0</div>
+          <div class="progress-pill" id="bestPill">Best: 0</div>
         </div>
       </section>
     </main>
@@ -104,6 +155,7 @@
   <script>
     const PUZZLES = {{ puzzles|tojson }};
     const MODE = "{{ category }}";
+    const SHOW_LANDING = {{ 'true' if show_landing else 'false' }};
 
     const imgEls = [document.getElementById('img0'), document.getElementById('img1'), document.getElementById('img2')];
     const expEls = [document.getElementById('exp0'), document.getElementById('exp1'), document.getElementById('exp2')];
@@ -114,8 +166,12 @@
 
     const loader = document.getElementById('loader');
     const progressPill = document.getElementById('progressPill');
+    const streakPill = document.getElementById('streakPill');
+    const bestPill = document.getElementById('bestPill');
     const answerCard = document.getElementById('answerCard');
     const answerText = document.getElementById('answerText');
+
+    const gotItBtn = document.getElementById('gotItBtn');
 
     const catDropdown = document.getElementById('catDropdown');
     const catBtn = document.getElementById('catBtn');
@@ -126,6 +182,39 @@
 
     let order = [];
     let pos = 0;
+
+    // Streak (self-reported)
+    const STREAK_KEY = 'three2one_streak';
+    const BEST_KEY = 'three2one_best';
+    let streak = Number(localStorage.getItem(STREAK_KEY) || 0);
+    let best = Number(localStorage.getItem(BEST_KEY) || 0);
+
+    // Per puzzle state
+    let scoredThisPuzzle = false;
+
+    function updateStreakUI() {
+      streakPill.textContent = `Streak: ${streak}`;
+      bestPill.textContent = `Best: ${best}`;
+    }
+
+    function setStreak(val) {
+      streak = Math.max(0, Number(val) || 0);
+      localStorage.setItem(STREAK_KEY, String(streak));
+      updateStreakUI();
+    }
+
+    function addToStreak() {
+      setStreak(streak + 1);
+      if (streak > best) {
+        best = streak;
+        localStorage.setItem(BEST_KEY, String(best));
+        updateStreakUI();
+      }
+    }
+
+    function resetStreak() {
+      setStreak(0);
+    }
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -161,28 +250,53 @@
       });
     }
 
+    function isRevealed() {
+      return document.body.classList.contains('reveal-on');
+    }
+
+    function updatePrevEnabled() {
+      // ✅ Prev should be enabled whenever pos > 0, regardless of reveal state
+      prevBtn.disabled = (pos === 0);
+      prevBtn.classList.toggle('is-disabled', prevBtn.disabled);
+    }
+
     function setRevealState(on) {
       document.body.classList.toggle('reveal-on', on);
+
       if (on) {
         answerText.textContent = currentPuzzle().answer || "";
         answerCard.classList.add('visible');
+
+        // unlock Next + GotIt only after reveal
+        nextBtn.disabled = false;
+        gotItBtn.disabled = false;
+
+        // reveal becomes one-way
+        revealBtn.textContent = "Revealed";
+        revealBtn.disabled = true;
       } else {
+        // Used internally for reset on navigation
         answerText.textContent = "";
         answerCard.classList.remove('visible');
+
+        nextBtn.disabled = true;
+        gotItBtn.disabled = true;
+
+        revealBtn.textContent = "Reveal";
+        revealBtn.disabled = false;
       }
+
+      // Prev is independent from reveal
+      updatePrevEnabled();
     }
 
     function updateNavUI() {
       const atEnd = (pos === order.length - 1);
-
-      // Next label changes to Restart at end
       nextBtn.textContent = atEnd ? "Restart ↻" : "Next →";
-
-      // ✅ Disable Prev at the start; do not wrap
-      prevBtn.disabled = (pos === 0);
-      prevBtn.classList.toggle('is-disabled', prevBtn.disabled);
-
       progressPill.textContent = `${pos + 1} / ${order.length}`;
+
+      // Prev independent from reveal
+      updatePrevEnabled();
     }
 
     async function renderPuzzle({ showLoader = false } = {}) {
@@ -200,9 +314,12 @@
         expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
       }
 
-      // reset reveal on navigation
-      setRevealState(false);
+      // reset per puzzle state and lock Next until reveal
+      scoredThisPuzzle = false;
+      gotItBtn.textContent = "I got it";
+      gotItBtn.classList.remove('is-on');
 
+      setRevealState(false);
       updateNavUI();
 
       // preload next
@@ -213,18 +330,51 @@
       loader.classList.remove('show');
     }
 
+    function toggleGotIt() {
+      if (!isRevealed()) return;
+
+      if (!scoredThisPuzzle) {
+        scoredThisPuzzle = true;
+        addToStreak();
+        gotItBtn.textContent = "✓ Dablyou";
+        gotItBtn.classList.add('is-on');
+      } else {
+        // undo (does NOT reduce best, only current streak)
+        scoredThisPuzzle = false;
+        setStreak(streak - 1);
+        gotItBtn.textContent = "I got it";
+        gotItBtn.classList.remove('is-on');
+      }
+    }
+
     // Buttons
-    revealBtn.addEventListener('click', () => setRevealState(true));
+    revealBtn.addEventListener('click', () => {
+      if (isRevealed()) return;
+      setRevealState(true);
+      updateNavUI();
+    });
+
+    gotItBtn.addEventListener('click', () => {
+      if (gotItBtn.disabled) return;
+      toggleGotIt();
+    });
 
     prevBtn.addEventListener('click', () => {
-      if (pos === 0) return; // ✅ hard stop
+      // ✅ allow prev even without reveal
+      if (pos === 0) return;
       pos -= 1;
       renderPuzzle();
     });
 
     nextBtn.addEventListener('click', () => {
+      if (!isRevealed()) return;
+
+      // If they move forward without scoring, streak breaks
+      if (!scoredThisPuzzle) resetStreak();
+
       const atEnd = (pos === order.length - 1);
       if (atEnd) {
+        resetStreak();
         buildOrder(catValue.textContent.trim());
       } else {
         pos += 1;
@@ -267,6 +417,42 @@
       if (e.key === "Escape") closeMenu();
     });
 
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (catDropdown.classList.contains('open')) return;
+
+      // Space: Reveal -> Got it -> Undo (no hide)
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!isRevealed()) {
+          revealBtn.click();
+        } else {
+          toggleGotIt();
+        }
+        return;
+      }
+
+      // Next only after reveal
+      if (e.key === 'ArrowRight') {
+        if (isRevealed()) nextBtn.click();
+        return;
+      }
+
+      // Prev always (except at start)
+      if (e.key === 'ArrowLeft') {
+        if (!prevBtn.disabled) prevBtn.click();
+        return;
+      }
+
+      // Optional: G to toggle got it (only after reveal)
+      if (e.key.toLowerCase() === 'g') {
+        if (isRevealed()) toggleGotIt();
+        return;
+      }
+    });
+
     // Theme toggle
     function applyTheme(theme) {
       if (theme === "dark") {
@@ -288,15 +474,45 @@
       applyTheme(next);
     });
 
+    // Landing overlay controls (same page)
+    function startGame() {
+      document.body.classList.remove('prestart');
+      const landing = document.getElementById('landing');
+      if (landing) landing.classList.add('hidden');
+      renderPuzzle({ showLoader: true });
+    }
+
     // Init
     buildOrder(MODE);
     catValue.textContent = MODE;
-    renderPuzzle({ showLoader: true });
+    updateStreakUI();
+
+    if (SHOW_LANDING) {
+      document.body.classList.add('prestart');
+      loader.classList.remove('show');
+
+      const startBtn = document.getElementById('startBtn');
+      const openCatBtn = document.getElementById('openCatBtn');
+      const landingCats = document.getElementById('landingCats');
+
+      startBtn?.addEventListener('click', startGame);
+      openCatBtn?.addEventListener('click', () => landingCats?.classList.toggle('hidden'));
+
+      landingCats?.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-cat]');
+        if (!btn) return;
+        const selected = btn.getAttribute('data-cat');
+        window.location.href = "/play/" + encodeURIComponent(selected);
+      });
+
+      // Don’t render puzzle until Start
+    } else {
+      renderPuzzle({ showLoader: true });
+    }
   </script>
 
-  <!-- ✅ Inline style overrides for Prev button readability (no need to touch style.css) -->
   <style>
-    /* Make Prev button readable: light background + dark text */
+    /* Prev button readability */
     .prev-button {
       background: rgba(255,255,255,0.85) !important;
       color: #24364b !important;
@@ -314,6 +530,79 @@
       transform: none !important;
       box-shadow: 0 6px 14px rgba(0,0,0,0.08) !important;
     }
+
+    /* Stable layout */
+    .progress-row { gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .progress-top { margin-top: 10px; margin-bottom: 10px; }
+    .progress-bottom { margin-top: 10px; }
+
+    .gotit-inline { min-width: 160px; }
+    .gotit-inline:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Landing overlay */
+    .landing-overlay{
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 1200;
+      background: rgba(10, 14, 24, 0.18);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    body.dark .landing-overlay{ background: rgba(0,0,0,0.35); }
+    .landing-overlay.hidden{ display:none; }
+    .landing-card{
+      width: min(760px, 92vw);
+      padding: 22px 22px 18px;
+      text-align: center;
+    }
+    .landing-title{
+      font-size: 1.55rem;
+      font-weight: 950;
+      margin-top: 10px;
+    }
+    .landing-sub{
+      margin-top: 10px;
+      font-size: 1.02rem;
+      opacity: 0.9;
+    }
+    .landing-bullets{
+      margin: 14px auto 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+      font-weight: 850;
+      opacity: 0.95;
+    }
+    .landing-actions{ margin-top: 16px; }
+    .landing-cats{ margin-top: 12px; }
+    .landing-cats.hidden{ display:none; }
+    .landing-cats-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    .landing-note{
+      margin-top: 10px;
+      font-size: 0.9rem;
+      opacity: 0.75;
+    }
+
+    /* Hide game content until Start */
+    body.prestart .category-row,
+    body.prestart .clues,
+    body.prestart .action-area{
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* Ensure dropdown chevron is visible in dark mode */
+    body.dark .dropdown-chevron{ opacity: 0.95; }
   </style>
 </body>
 </html>
