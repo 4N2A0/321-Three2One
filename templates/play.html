@@ -10,8 +10,6 @@
 </head>
 
 <body class="theme-fun">
-  {% set SHOW_LANDING = show_landing|default(false) %}
-
   <!-- Loader -->
   <div id="loader" class="loader show" aria-hidden="true">
     <div class="loader-card">
@@ -25,33 +23,34 @@
     🌙
   </button>
 
-  <!-- Landing overlay (same page, no navigation) -->
-  <div id="landing" class="landing-overlay {% if not SHOW_LANDING %}hidden{% endif %}" aria-hidden="{% if SHOW_LANDING %}false{% else %}true{% endif %}">
+  <!-- Landing overlay (ALWAYS shows on refresh) -->
+  <div id="landing" class="landing-overlay" aria-hidden="false">
     <div class="landing-card answer-card visible">
       <br>
       <div class="answer-label">321: THREE CLUES 2 ONE CONNECTION</div>
 
-
       <div class="landing-title">Don't Be Dumb</div>
 
       <div class="landing-flow" aria-hidden="true">
-      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-      <div class="arrow">→</div>
-      <div class="one">🔗</div>
-    </div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="arrow">→</div>
+        <div class="one">🔗</div>
+      </div>
+
       <ul class="landing-bullets">
         <li>Keyboard Shortcuts:</li>
-
       </ul>
-       <div class="landing-sub">Space = Reveal → Got it → Undo</div>
-    <div class="landing-sub">Arrow keys = Previous, Next (after reveal)</div>
 
-<br>
+      <div class="landing-sub">Space = Reveal → Got it → Undo</div>
+      <div class="landing-sub">Arrow keys = Previous, Next (after reveal)</div>
+
+      <br>
       <div class="buttons-row nav-3 landing-actions">
         <button class="button reveal-button" id="startBtn" type="button">Start</button>
         <button class="button next-button" id="openCatBtn" type="button">Category</button>
       </div>
-<br>
+      <br>
+
       <div id="landingCats" class="landing-cats hidden">
         <div class="landing-cats-row">
           <button class="button nav-button" data-cat="Random" type="button">Random</button>
@@ -155,7 +154,6 @@
   <script>
     const PUZZLES = {{ puzzles|tojson }};
     const MODE = "{{ category }}";
-    const SHOW_LANDING = {{ 'true' if show_landing else 'false' }};
 
     const imgEls = [document.getElementById('img0'), document.getElementById('img1'), document.getElementById('img2')];
     const expEls = [document.getElementById('exp0'), document.getElementById('exp1'), document.getElementById('exp2')];
@@ -180,6 +178,12 @@
 
     const themeToggle = document.getElementById('themeToggle');
 
+    // Landing controls
+    const landing = document.getElementById('landing');
+    const startBtn = document.getElementById('startBtn');
+    const openCatBtn = document.getElementById('openCatBtn');
+    const landingCats = document.getElementById('landingCats');
+
     let order = [];
     let pos = 0;
 
@@ -189,8 +193,14 @@
     let streak = Number(localStorage.getItem(STREAK_KEY) || 0);
     let best = Number(localStorage.getItem(BEST_KEY) || 0);
 
-    // Per puzzle state
+    // Per puzzle state (session-only; resets on refresh)
+    const revealedOnce = {}; // puzzleId -> true (only used for solved)
+    const solvedOnce = {};   // puzzleId -> true (locks scoring)
     let scoredThisPuzzle = false;
+
+    function puzzleId() {
+      return order[pos]; // underlying PUZZLES index
+    }
 
     function updateStreakUI() {
       streakPill.textContent = `Streak: ${streak}`;
@@ -201,6 +211,15 @@
       streak = Math.max(0, Number(val) || 0);
       localStorage.setItem(STREAK_KEY, String(streak));
       updateStreakUI();
+    }
+
+    function resetRunState() {
+      // Clear per-puzzle session memory
+      for (const k in solvedOnce) delete solvedOnce[k];
+      for (const k in revealedOnce) delete revealedOnce[k];
+
+    // Reset per-visit state
+      scoredThisPuzzle = false;
     }
 
     function addToStreak() {
@@ -255,7 +274,6 @@
     }
 
     function updatePrevEnabled() {
-      // ✅ Prev should be enabled whenever pos > 0, regardless of reveal state
       prevBtn.disabled = (pos === 0);
       prevBtn.classList.toggle('is-disabled', prevBtn.disabled);
     }
@@ -267,15 +285,12 @@
         answerText.textContent = currentPuzzle().answer || "";
         answerCard.classList.add('visible');
 
-        // unlock Next + GotIt only after reveal
         nextBtn.disabled = false;
         gotItBtn.disabled = false;
 
-        // reveal becomes one-way
         revealBtn.textContent = "Revealed";
         revealBtn.disabled = true;
       } else {
-        // Used internally for reset on navigation
         answerText.textContent = "";
         answerCard.classList.remove('visible');
 
@@ -286,7 +301,6 @@
         revealBtn.disabled = false;
       }
 
-      // Prev is independent from reveal
       updatePrevEnabled();
     }
 
@@ -294,9 +308,23 @@
       const atEnd = (pos === order.length - 1);
       nextBtn.textContent = atEnd ? "Restart ↻" : "Next →";
       progressPill.textContent = `${pos + 1} / ${order.length}`;
-
-      // Prev independent from reveal
       updatePrevEnabled();
+    }
+
+    // If user leaves a puzzle after revealing but NOT solving, clear that reveal.
+    // If user solved it, persist as solved (auto-reveal on revisit, no re-score).
+    function persistStateOnLeave() {
+      const id = puzzleId();
+
+      if (isRevealed() && !scoredThisPuzzle && !solvedOnce[id]) {
+        // accidental / uncommitted reveal: clear
+        revealedOnce[id] = false;
+      }
+
+      if (scoredThisPuzzle) {
+        solvedOnce[id] = true;
+        revealedOnce[id] = true;
+      }
     }
 
     async function renderPuzzle({ showLoader = false } = {}) {
@@ -314,12 +342,28 @@
         expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
       }
 
-      // reset per puzzle state and lock Next until reveal
+      // reset per-visit state
       scoredThisPuzzle = false;
-      gotItBtn.textContent = "I got it";
       gotItBtn.classList.remove('is-on');
 
+      // default to hidden/locked
       setRevealState(false);
+
+      // auto-state if already solved
+      const id = puzzleId();
+      if (solvedOnce[id]) {
+        // auto-reveal + lock scoring
+        setRevealState(true);
+        gotItBtn.disabled = true;
+        gotItBtn.textContent = "Solved";
+        gotItBtn.classList.remove('is-on');
+
+        // Treat as scored for this visit so Next doesn't reset streak
+        scoredThisPuzzle = true;
+      } else {
+        gotItBtn.textContent = "I got it";
+      }
+
       updateNavUI();
 
       // preload next
@@ -333,13 +377,16 @@
     function toggleGotIt() {
       if (!isRevealed()) return;
 
+      const id = puzzleId();
+      if (solvedOnce[id]) return; // already solved earlier in session
+
       if (!scoredThisPuzzle) {
         scoredThisPuzzle = true;
         addToStreak();
         gotItBtn.textContent = "✓ Dablyou";
         gotItBtn.classList.add('is-on');
       } else {
-        // undo (does NOT reduce best, only current streak)
+        // undo (best stays; current streak decrements)
         scoredThisPuzzle = false;
         setStreak(streak - 1);
         gotItBtn.textContent = "I got it";
@@ -349,6 +396,10 @@
 
     // Buttons
     revealBtn.addEventListener('click', () => {
+      // Don't allow reveal on already-solved (it will auto be revealed)
+      const id = puzzleId();
+      if (solvedOnce[id]) return;
+
       if (isRevealed()) return;
       setRevealState(true);
       updateNavUI();
@@ -360,8 +411,8 @@
     });
 
     prevBtn.addEventListener('click', () => {
-      // ✅ allow prev even without reveal
       if (pos === 0) return;
+      persistStateOnLeave();
       pos -= 1;
       renderPuzzle();
     });
@@ -369,12 +420,17 @@
     nextBtn.addEventListener('click', () => {
       if (!isRevealed()) return;
 
-      // If they move forward without scoring, streak breaks
-      if (!scoredThisPuzzle) resetStreak();
+      persistStateOnLeave();
+
+      // If they move forward without scoring (and it wasn't a solved revisit), streak breaks
+      const id = puzzleId();
+      const isSolvedRevisit = solvedOnce[id] && scoredThisPuzzle;
+      if (!scoredThisPuzzle && !isSolvedRevisit) resetStreak();
 
       const atEnd = (pos === order.length - 1);
       if (atEnd) {
         resetStreak();
+        resetRunState();
         buildOrder(catValue.textContent.trim());
       } else {
         pos += 1;
@@ -426,10 +482,14 @@
       // Space: Reveal -> Got it -> Undo (no hide)
       if (e.code === 'Space') {
         e.preventDefault();
+        const id = puzzleId();
+
         if (!isRevealed()) {
-          revealBtn.click();
+          // if solved puzzle, it will already be revealed; otherwise reveal
+          if (!solvedOnce[id]) revealBtn.click();
         } else {
-          toggleGotIt();
+          // only toggle got it if not solved/locked
+          if (!solvedOnce[id]) toggleGotIt();
         }
         return;
       }
@@ -448,7 +508,8 @@
 
       // Optional: G to toggle got it (only after reveal)
       if (e.key.toLowerCase() === 'g') {
-        if (isRevealed()) toggleGotIt();
+        const id = puzzleId();
+        if (isRevealed() && !solvedOnce[id]) toggleGotIt();
         return;
       }
     });
@@ -474,11 +535,10 @@
       applyTheme(next);
     });
 
-    // Landing overlay controls (same page)
+    // Landing overlay controls
     function startGame() {
       document.body.classList.remove('prestart');
-      const landing = document.getElementById('landing');
-      if (landing) landing.classList.add('hidden');
+      landing.classList.add('hidden');
       renderPuzzle({ showLoader: true });
     }
 
@@ -487,28 +547,20 @@
     catValue.textContent = MODE;
     updateStreakUI();
 
-    if (SHOW_LANDING) {
-      document.body.classList.add('prestart');
-      loader.classList.remove('show');
+    // Always start on landing (prevents Render refresh differences)
+    document.body.classList.add('prestart');
+    loader.classList.remove('show');
 
-      const startBtn = document.getElementById('startBtn');
-      const openCatBtn = document.getElementById('openCatBtn');
-      const landingCats = document.getElementById('landingCats');
+    startBtn.addEventListener('click', startGame);
 
-      startBtn?.addEventListener('click', startGame);
-      openCatBtn?.addEventListener('click', () => landingCats?.classList.toggle('hidden'));
+    openCatBtn.addEventListener('click', () => landingCats.classList.toggle('hidden'));
 
-      landingCats?.addEventListener('click', (e) => {
-        const btn = e.target.closest('button[data-cat]');
-        if (!btn) return;
-        const selected = btn.getAttribute('data-cat');
-        window.location.href = "/play/" + encodeURIComponent(selected);
-      });
-
-      // Don’t render puzzle until Start
-    } else {
-      renderPuzzle({ showLoader: true });
-    }
+    landingCats.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-cat]');
+      if (!btn) return;
+      const selected = btn.getAttribute('data-cat');
+      window.location.href = "/play/" + encodeURIComponent(selected);
+    });
   </script>
 
   <style>
@@ -537,7 +589,30 @@
     .progress-bottom { margin-top: 10px; }
 
     .gotit-inline { min-width: 160px; }
-    .gotit-inline:disabled { opacity: 0.45; cursor: not-allowed; }
+    .gotit-inline:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* Next button = blue (distinct from green got-it) */
+    .next-primary{
+      background: rgba(59, 130, 246, 0.92) !important;
+      color: #fff !important;
+      border: 1px solid rgba(59, 130, 246, 0.55) !important;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.10) !important;
+    }
+    .next-primary:hover{
+      background: rgba(59, 130, 246, 1) !important;
+    }
+    .next-primary:disabled{
+      opacity: 0.45 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+    }
+
+    /* Got-it clicked state */
+    .gotit-inline.is-on{
+      background: rgba(34, 197, 94, 0.65) !important;
+      border: 1px solid rgba(34, 197, 94, 0.45) !important;
+      filter: saturate(0.95) !important;
+    }
 
     /* Landing overlay */
     .landing-overlay{
