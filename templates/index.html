@@ -1,33 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>321: Three 2 One</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='ico.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body class="theme-fun">
+  <!-- Theme toggle (kept consistent with play.html) -->
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode" title="Toggle theme">
+    🌙
+  </button>
+
   <div class="page">
     <header class="topbar">
-      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="Game logo">
+      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="321: Three 2 One">
     </header>
 
     <main class="stage">
-      <form method="post" class="category-form">
-        <label for="category-select">Choose a category:</label>
-        <select id="category-select" name="category">
-          <option value="Random">Random</option>
-          {% for cat in categories %}
-            <option value="{{ cat }}">{{ cat }}</option>
-          {% endfor %}
-        </select>
-        <button class="button reveal-button" type="submit">Start</button>
-      </form>
-    </main>
+      <div class="answer-slot" style="margin-top: 12px;">
+        <div class="answer-card visible" style="text-align:center;">
+          <div class="answer-label">How it works</div>
+          <div class="answer-text" style="font-size: 1.15rem; line-height: 1.35; margin-top: 10px;">
+            Three clues to one connection.<br>
+            Don't Be Dumb.
+          </div>
 
-    <footer class="footer">
-      <p class="credit">Created by 420TN</code>.</p>
-    </footer>
+          <div style="margin-top: 14px; font-weight: 800; color: rgba(35,48,68,0.82);">
+            • Random mode by default<br>
+            • Instant next puzzle<br>
+            • Optional categories
+          </div>
+        </div>
+      </div>
+
+      <div class="buttons-row" style="margin-top: 18px;">
+        <a class="button reveal-button" href="{{ url_for('play', category='Random') }}" style="text-decoration:none;">
+          Start Game →
+        </a>
+
+        <a class="button next-button" href="/?choose=1" style="text-decoration:none;">
+          Choose Category
+        </a>
+      </div>
+
+      {% if categories %}
+      <div style="margin-top: 18px; display:flex; justify-content:center;">
+        <form method="POST" style="width:min(520px, 100%);">
+          <div class="answer-card visible" style="padding: 14px;">
+            <div class="answer-label" style="text-align:center;">Pick a category</div>
+
+            <div style="display:flex; gap: 10px; justify-content:center; margin-top: 12px; flex-wrap: wrap;">
+              <select name="category" class="progress-pill" style="border:none; outline:none;">
+                <option value="Random">Random</option>
+                {% for cat in categories %}
+                  <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+              </select>
+
+              <button class="button reveal-button small" type="submit">
+                Start
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+    </main>
   </div>
+
+  <script>
+    // Theme toggle (same behavior as play.html)
+    const themeToggle = document.getElementById('themeToggle');
+
+    function applyTheme(theme) {
+      if (theme === "dark") {
+        document.body.classList.add("dark");
+        themeToggle.textContent = "☀️";
+      } else {
+        document.body.classList.remove("dark");
+        themeToggle.textContent = "🌙";
+      }
+    }
+
+    const savedTheme = localStorage.getItem("three2one_theme") || "dark";
+    applyTheme(savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.body.classList.toggle("dark");
+      const next = isDark ? "dark" : "light";
+      localStorage.setItem("three2one_theme", next);
+      applyTheme(next);
+    });
+  </script>
 </body>
 </html>
