@@ -17,22 +17,19 @@ def build_app(puzzles: list[dict]) -> Flask:
 
     categories = sorted(set(p["category"] for p in puzzles))
 
-    @app.route("/", methods=["GET", "POST"])
-    def index():
-        """
-        Default behavior:
-        - Start immediately in Random mode (no category page).
-        - If user submits the category form (POST), go to that category.
-        - If user explicitly wants the category chooser page: /?choose=1
-        """
-        if request.method == "POST":
-            category = request.form.get("category", "Random")
-            return redirect(url_for("play", category=category))
+    @app.route("/", methods=["GET"])
+    def home():
+        category = request.args.get("cat", "Random")
 
-        if request.args.get("choose") == "1":
-            return render_template("index.html", categories=categories)
+        # Build puzzles list for that category (use whatever logic you already have in /play/<cat>)
+        puzzles_in_category = puzzles[:] if category == "Random" else [p for p in puzzles if p["category"] == category]
 
-        return redirect(url_for("play", category="Random"))
+        return render_template(
+            "play.html",
+            categories=categories,
+            category=category,
+            puzzles=puzzles_in_category,
+        )
 
     @app.route("/play/<category>")
     def play(category: str):
