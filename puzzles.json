@@ -1,20 +1,62 @@
 [
   {
-    "category": "Funny",
+    "category": "Music",
     "clues": [
       "images/clue1.jpg",
       "images/clue2.jpg",
       "images/clue3.jpg"
     ],
-    "answer": "Example Answer",
+    "answer": "January 28th - J. Cole",
     "explanations": [
-      "This is the explanation for the first clue.",
-      "This explains how the second image relates to the answer.",
-      "This is the connection from the third picture."
+      "Fayetteville (the ville is back)",
+      "Cole’s birthday (January 28)",
+      "'Get Obama to force the air force to find it'"
     ]
   },
   {
-    "category": "Country",
+    "category": "Tunisia",
+    "clues": [
+      "images/clue4.jpg",
+      "images/clue5.jpg",
+      "images/clue6.jpg"
+    ],
+    "answer": "Another Answer",
+    "explanations": [
+      "Explanation for the first clue of the second puzzle.",
+      "Explanation for the second clue of the second puzzle.",
+      "Explanation for the third clue of the second puzzle."
+    ]
+  },
+  {
+    "category": "Trending",
+    "clues": [
+      "images/clue4.jpg",
+      "images/clue5.jpg",
+      "images/clue6.jpg"
+    ],
+    "answer": "Another Answer",
+    "explanations": [
+      "Explanation for the first clue of the second puzzle.",
+      "Explanation for the second clue of the second puzzle.",
+      "Explanation for the third clue of the second puzzle."
+    ]
+  },
+  {
+    "category": "Music",
+    "clues": [
+      "images/clue7.jpg",
+      "images/clue8.jpg",
+      "images/clue9.jpg"
+    ],
+    "answer": "Chromakopia",
+    "explanations": [
+      "B&W (theme)",
+      "Sticky (album hit)",
+      "Trumpet (most used instrument)"
+    ]
+  },
+  {
+    "category": "321",
     "clues": [
       "images/clue4.jpg",
       "images/clue5.jpg",
