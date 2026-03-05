@@ -4,37 +4,54 @@
   <meta charset="UTF-8">
   <title>321: Three 2 One</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='ico.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body class="theme-fun">
+  <!-- Loader -->
+  <div id="loader" class="loader show" aria-hidden="true">
+    <div class="loader-card">
+      <div class="spinner"></div>
+      <div class="loader-text">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode" title="Toggle theme">
+    🌙
+  </button>
+
   <div class="page">
     <header class="topbar">
       <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="321: Three 2 One">
     </header>
 
-    <main class="stage">
-      <div class="category-row">
-        <!-- Switcher (left) -->
-        <form class="category-switch" method="post" action="{{ url_for('index') }}">
-          <label for="category-select" class="sr-only">Category</label>
-          <select id="category-select" name="category" onchange="this.form.submit()">
-            <option value="Random" {% if category == "Random" %}selected{% endif %}>Random</option>
-            {% for cat in categories %}
-              <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
-            {% endfor %}
-          </select>
-          <noscript>
-            <button class="button small" type="submit">Switch</button>
-          </noscript>
-        </form>
+    <header class="topbar">
+<h5 style="text-align: center;">Three clues. One connection. Can you see it?</h5>
+   </header>
 
-        <!-- Badge (right) -->
-        <div class="category-badge" id="categoryBadge">{{ category }}</div>
+    <main class="stage">
+      <!-- Category dropdown -->
+      <div class="category-row">
+        <div class="dropdown" id="catDropdown">
+          <button class="dropdown-btn" id="catBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+            <span class="dropdown-value" id="catValue">{{ category }}</span>
+            <span class="dropdown-chevron" aria-hidden="true">▾</span>
+          </button>
+
+          <div class="dropdown-menu" id="catMenu" role="listbox" tabindex="-1" aria-label="Choose category">
+            <div class="dropdown-item" role="option" data-category="Random">Random</div>
+            {% for cat in categories %}
+              <div class="dropdown-item" role="option" data-category="{{ cat }}">{{ cat }}</div>
+            {% endfor %}
+          </div>
+        </div>
       </div>
 
+      <!-- Clues -->
       <div class="clues" id="clues">
-        <!-- 3 clue cards (reused each puzzle; no page reload) -->
         <div class="clue">
           <div class="clue-media">
             <img id="img0" alt="Clue 1">
@@ -57,39 +74,58 @@
         </div>
       </div>
 
+      <!-- Action area -->
       <section class="action-area">
         <div class="answer-slot">
-          <h2 class="answer-heading" id="answerHeading"></h2>
+          <div class="answer-card" id="answerCard">
+            <div class="answer-label">Answer</div>
+            <div class="answer-text" id="answerText"></div>
+          </div>
         </div>
 
-        <div class="buttons-row">
-          <button class="button reveal-button" id="revealBtn">Reveal Answer</button>
-          <button class="button next-button" id="nextBtn">Next Puzzle</button>
+        <!-- Prev / Reveal / Next -->
+        <div class="buttons-row nav-3">
+          <button class="button nav-button prev-button" id="prevBtn" type="button">← Prev</button>
+          <button class="button reveal-button" id="revealBtn" type="button">Reveal</button>
+          <button class="button next-button" id="nextBtn" type="button">Next →</button>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-pill" id="progressPill">1 / {{ puzzles|length }}</div>
         </div>
       </section>
     </main>
 
     <footer class="footer">
-      <p class="credit">Created with Flask – puzzles from <code>puzzles.json</code>.</p>
+      <p class="credit">Created by <code>420TN</code></p>
     </footer>
   </div>
 
   <script>
-    // Puzzles embedded once. No extra requests for reveal/next.
     const PUZZLES = {{ puzzles|tojson }};
-    const MODE = "{{ category }}"; // "Random" or specific category
+    const MODE = "{{ category }}";
 
-    // DOM
     const imgEls = [document.getElementById('img0'), document.getElementById('img1'), document.getElementById('img2')];
     const expEls = [document.getElementById('exp0'), document.getElementById('exp1'), document.getElementById('exp2')];
-    const answerHeading = document.getElementById('answerHeading');
+
+    const prevBtn = document.getElementById('prevBtn');
     const revealBtn = document.getElementById('revealBtn');
     const nextBtn = document.getElementById('nextBtn');
 
-    // Random non-repeat order
+    const loader = document.getElementById('loader');
+    const progressPill = document.getElementById('progressPill');
+    const answerCard = document.getElementById('answerCard');
+    const answerText = document.getElementById('answerText');
+
+    const catDropdown = document.getElementById('catDropdown');
+    const catBtn = document.getElementById('catBtn');
+    const catMenu = document.getElementById('catMenu');
+    const catValue = document.getElementById('catValue');
+
+    const themeToggle = document.getElementById('themeToggle');
+
     let order = [];
     let pos = 0;
-    let revealed = false;
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -99,85 +135,185 @@
       return array;
     }
 
-    function buildOrder() {
+    function buildOrder(currentCategory) {
       order = [...Array(PUZZLES.length).keys()];
-      if (MODE === "Random") shuffle(order);
+      if (currentCategory === "Random") shuffle(order);
       pos = 0;
-    }
-
-    function setRevealState(on) {
-      revealed = on;
-      document.body.classList.toggle('reveal-on', on);
-
-      // Keep placeholders stable (no layout shift)
-      if (on) {
-        answerHeading.textContent = "Answer: " + currentPuzzle().answer;
-        nextBtn.style.display = "inline-flex";
-        revealBtn.style.display = "none";
-      } else {
-        answerHeading.textContent = ""; // reserved height stays via CSS
-        nextBtn.style.display = "none";
-        revealBtn.style.display = "inline-flex";
-      }
     }
 
     function currentPuzzle() {
       return PUZZLES[order[pos]];
     }
 
+    function waitForVisibleImages() {
+      const promises = imgEls.map(img => new Promise(resolve => {
+        if (img.complete && img.naturalWidth > 0) return resolve();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      }));
+      return Promise.all(promises);
+    }
+
     function preloadPuzzle(p) {
-      // Preload images for smoother next
       (p.clues || []).forEach(path => {
         const im = new Image();
         im.src = "{{ url_for('static', filename='') }}" + path;
       });
     }
 
-    function renderPuzzle() {
-      const p = currentPuzzle();
+    function setRevealState(on) {
+      document.body.classList.toggle('reveal-on', on);
+      if (on) {
+        answerText.textContent = currentPuzzle().answer || "";
+        answerCard.classList.add('visible');
+      } else {
+        answerText.textContent = "";
+        answerCard.classList.remove('visible');
+      }
+    }
 
-      // Images
+    function updateNavUI() {
+      const atEnd = (pos === order.length - 1);
+
+      // Next label changes to Restart at end
+      nextBtn.textContent = atEnd ? "Restart ↻" : "Next →";
+
+      // ✅ Disable Prev at the start; do not wrap
+      prevBtn.disabled = (pos === 0);
+      prevBtn.classList.toggle('is-disabled', prevBtn.disabled);
+
+      progressPill.textContent = `${pos + 1} / ${order.length}`;
+    }
+
+    async function renderPuzzle({ showLoader = false } = {}) {
+      const p = currentPuzzle();
+      const atEnd = (pos === order.length - 1);
+
+      if (showLoader) loader.classList.add('show');
+
       for (let i = 0; i < 3; i++) {
         const path = p.clues[i] || "";
         imgEls[i].src = "{{ url_for('static', filename='') }}" + path;
       }
 
-      // Explanations live in overlay; they appear only in reveal mode (CSS)
       for (let i = 0; i < 3; i++) {
         expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
       }
 
-      // Reset reveal state for new puzzle
+      // reset reveal on navigation
       setRevealState(false);
 
-      // Button label: Restart at end of cycle (Random and non-random)
-      const atEnd = (pos === order.length - 1);
-      nextBtn.textContent = atEnd ? "Restart" : "Next Puzzle";
+      updateNavUI();
 
-      // Preload next puzzle images (cache warm)
+      // preload next
       const nextPos = atEnd ? 0 : (pos + 1);
       preloadPuzzle(PUZZLES[order[nextPos]]);
+
+      await waitForVisibleImages();
+      loader.classList.remove('show');
     }
 
-    revealBtn.addEventListener('click', () => {
-      setRevealState(true);
+    // Buttons
+    revealBtn.addEventListener('click', () => setRevealState(true));
+
+    prevBtn.addEventListener('click', () => {
+      if (pos === 0) return; // ✅ hard stop
+      pos -= 1;
+      renderPuzzle();
     });
 
     nextBtn.addEventListener('click', () => {
       const atEnd = (pos === order.length - 1);
-
       if (atEnd) {
-        // Restart: reshuffle in Random mode, else restart from beginning
-        buildOrder();
+        buildOrder(catValue.textContent.trim());
       } else {
         pos += 1;
       }
       renderPuzzle();
     });
 
+    // Dropdown
+    function openMenu() {
+      catDropdown.classList.add('open');
+      catBtn.setAttribute('aria-expanded', 'true');
+      catMenu.focus();
+    }
+    function closeMenu() {
+      catDropdown.classList.remove('open');
+      catBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    catBtn.addEventListener('click', () => {
+      if (catDropdown.classList.contains('open')) closeMenu();
+      else openMenu();
+    });
+
+    catMenu.addEventListener('click', (e) => {
+      const item = e.target.closest('.dropdown-item');
+      if (!item) return;
+
+      const selected = item.getAttribute('data-category');
+      catValue.textContent = selected;
+      closeMenu();
+
+      window.location.href = "/play/" + encodeURIComponent(selected);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!catDropdown.contains(e.target)) closeMenu();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === "Escape") closeMenu();
+    });
+
+    // Theme toggle
+    function applyTheme(theme) {
+      if (theme === "dark") {
+        document.body.classList.add("dark");
+        themeToggle.textContent = "☀️";
+      } else {
+        document.body.classList.remove("dark");
+        themeToggle.textContent = "🌙";
+      }
+    }
+
+    const savedTheme = localStorage.getItem("three2one_theme") || "dark";
+    applyTheme(savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.body.classList.toggle("dark");
+      const next = isDark ? "dark" : "light";
+      localStorage.setItem("three2one_theme", next);
+      applyTheme(next);
+    });
+
     // Init
-    buildOrder();
-    renderPuzzle();
+    buildOrder(MODE);
+    catValue.textContent = MODE;
+    renderPuzzle({ showLoader: true });
   </script>
+
+  <!-- ✅ Inline style overrides for Prev button readability (no need to touch style.css) -->
+  <style>
+    /* Make Prev button readable: light background + dark text */
+    .prev-button {
+      background: rgba(255,255,255,0.85) !important;
+      color: #24364b !important;
+      border: 1px solid rgba(36,54,75,0.18) !important;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.10) !important;
+    }
+    .prev-button:hover {
+      filter: none !important;
+      background: rgba(255,255,255,0.95) !important;
+    }
+    .prev-button.is-disabled,
+    .prev-button:disabled {
+      opacity: 0.45 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08) !important;
+    }
+  </style>
 </body>
 </html>
