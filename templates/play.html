@@ -243,11 +243,11 @@
       return array;
     }
 
-    function buildOrder(currentCategory) {
-      order = [...Array(PUZZLES.length).keys()];
-      if (currentCategory === "Random") shuffle(order);
-      pos = 0;
-    }
+    function buildOrder() {
+  order = [...Array(PUZZLES.length).keys()];
+  shuffle(order);
+  pos = 0;
+}
 
     function currentPuzzle() {
       return PUZZLES[order[pos]];
@@ -529,7 +529,7 @@
     }
 
     // Init
-    buildOrder(MODE);
+    buildOrder();
     catValue.textContent = MODE;
     if (window.location.search.includes("cat=")) {
       history.replaceState(null, "", "/");
