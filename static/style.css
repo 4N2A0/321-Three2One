@@ -245,7 +245,7 @@ body.dark .dropdown-chevron {
   text-align: center;
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0s ease, transform 0s ease;
   pointer-events: none;
 }
 
