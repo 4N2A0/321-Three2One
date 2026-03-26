@@ -96,21 +96,21 @@
       <div class="clues" id="clues">
         <div class="clue">
           <div class="clue-media">
-            <img id="img0" alt="Clue 1">
+            <img id="img0" class="clue-img" alt="Clue 1">
             <div class="clue-overlay" id="exp0"></div>
           </div>
         </div>
 
         <div class="clue">
           <div class="clue-media">
-            <img id="img1" alt="Clue 2">
+            <img id="img1" class="clue-img" alt="Clue 2">
             <div class="clue-overlay" id="exp1"></div>
           </div>
         </div>
 
         <div class="clue">
           <div class="clue-media">
-            <img id="img2" alt="Clue 3">
+            <img id="img2" class="clue-img" alt="Clue 3">
             <div class="clue-overlay" id="exp2"></div>
           </div>
         </div>
@@ -315,12 +315,15 @@
       return cached.images.every(im => im.complete && im.naturalWidth > 0);
     }
 
-    function clearImagesImmediately() {
-      for (let i = 0; i < 3; i++) {
-        imgEls[i].removeAttribute('src');
-        expEls[i].textContent = "";
-      }
-    }
+function clearImagesImmediately() {
+  for (let i = 0; i < 3; i++) {
+    imgEls[i].classList.remove('is-visible');
+    expEls[i].classList.remove('is-visible');
+
+    imgEls[i].removeAttribute('src');
+    expEls[i].textContent = "";
+  }
+}
 
     function isRevealed() {
       return document.body.classList.contains('reveal-on');
@@ -379,64 +382,80 @@
       }
     }
 
-    async function renderPuzzle({ showLoader = false } = {}) {
-      const renderToken = ++activeRenderToken;
-      const p = currentPuzzle();
-      const atEnd = (pos === order.length - 1);
+async function renderPuzzle({ showLoader = false } = {}) {
+  const renderToken = ++activeRenderToken;
+  const p = currentPuzzle();
+  const atEnd = (pos === order.length - 1);
 
-      if (showLoader) {
-        loader.classList.add('show');
-        clearImagesImmediately();
-      }
+  // Always clear old puzzle content immediately
+  clearImagesImmediately();
 
-      // reset per-visit state
-      scoredThisPuzzle = false;
-      gotItBtn.classList.remove('is-on');
+  if (showLoader) {
+    loader.classList.add('show');
+  }
 
-      // default to hidden/locked
-      setRevealState(false);
+  // reset per-visit state
+  scoredThisPuzzle = false;
+  gotItBtn.classList.remove('is-on');
 
-      const key = puzzleCacheKey(p);
-      let cached = preloadCache.get(key);
+  // default to hidden/locked
+  setRevealState(false);
 
-      if (!cached) {
-        await preloadPuzzle(p);
-        cached = preloadCache.get(key);
-      }
+  const key = puzzleCacheKey(p);
+  let cached = preloadCache.get(key);
 
-      await cached.promise;
+  if (!cached) {
+    await preloadPuzzle(p);
+    cached = preloadCache.get(key);
+  }
 
-      if (renderToken !== activeRenderToken) return;
+  await cached.promise;
 
-      for (let i = 0; i < 3; i++) {
-        imgEls[i].src = cached.urls[i] || "";
-      }
+  if (renderToken !== activeRenderToken) return;
 
-      for (let i = 0; i < 3; i++) {
-        expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
-      }
+  for (let i = 0; i < 3; i++) {
+    imgEls[i].src = cached.urls[i] || "";
+  }
 
-      // auto-state if already solved
-      const id = puzzleId();
-      if (solvedOnce[id]) {
-        setRevealState(true);
-        gotItBtn.disabled = true;
-        gotItBtn.textContent = "Solved";
-        gotItBtn.classList.remove('is-on');
-        scoredThisPuzzle = true;
-      } else {
-        gotItBtn.textContent = "I got it";
-      }
+  await waitForVisibleImages();
 
-      updateNavUI();
+  if (renderToken !== activeRenderToken) return;
 
-      // preload next puzzle in background
-      const nextPos = atEnd ? 0 : (pos + 1);
-      preloadPuzzle(PUZZLES[order[nextPos]]);
+  for (let i = 0; i < 3; i++) {
+    expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
+  }
 
-      loader.classList.remove('show');
+  // Animate in only after everything is ready
+  requestAnimationFrame(() => {
+    if (renderToken !== activeRenderToken) return;
+
+    for (let i = 0; i < 3; i++) {
+      imgEls[i].classList.add('is-visible');
+      expEls[i].classList.add('is-visible');
     }
+  });
 
+  // auto-state if already solved
+  const id = puzzleId();
+  if (solvedOnce[id]) {
+    setRevealState(true);
+    gotItBtn.disabled = true;
+    gotItBtn.textContent = "Solved";
+    gotItBtn.classList.remove('is-on');
+    scoredThisPuzzle = true;
+  } else {
+    gotItBtn.textContent = "I got it";
+  }
+
+  updateNavUI();
+
+  // preload next puzzle in background
+  const nextPos = atEnd ? 0 : (pos + 1);
+  preloadPuzzle(PUZZLES[order[nextPos]]);
+
+  loader.classList.remove('show');
+}
+    
     function toggleGotIt() {
       if (!isRevealed()) return;
 
