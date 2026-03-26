@@ -621,16 +621,13 @@ body.prestart .progress-row{
   filter: saturate(0.95) !important;
 }
 
-/* Clue reveal animation */
-.clue-img,
-.clue-overlay {
+.clue-img {
   opacity: 0;
   transform: translateY(8px);
   transition: opacity 180ms ease, transform 180ms ease;
 }
 
-.clue-img.is-visible,
-.clue-overlay.is-visible {
+.clue-img.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
