@@ -389,7 +389,7 @@ body.dark .dropdown-chevron {
   border-radius: 0.95rem;
   background: rgba(8, 14, 30, 0.06);
   backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  -webkit-backdrop-filter: blur(6px);
 }
 
 body.dark .loader {
