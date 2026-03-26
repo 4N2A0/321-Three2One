@@ -318,13 +318,11 @@
 function clearImagesImmediately() {
   for (let i = 0; i < 3; i++) {
     imgEls[i].classList.remove('is-visible');
-    expEls[i].classList.remove('is-visible');
-
     imgEls[i].removeAttribute('src');
     expEls[i].textContent = "";
   }
 }
-
+    
     function isRevealed() {
       return document.body.classList.contains('reveal-on');
     }
@@ -387,18 +385,15 @@ async function renderPuzzle({ showLoader = false } = {}) {
   const p = currentPuzzle();
   const atEnd = (pos === order.length - 1);
 
-  // Always clear old puzzle content immediately
   clearImagesImmediately();
 
   if (showLoader) {
     loader.classList.add('show');
   }
 
-  // reset per-visit state
   scoredThisPuzzle = false;
   gotItBtn.classList.remove('is-on');
 
-  // default to hidden/locked
   setRevealState(false);
 
   const key = puzzleCacheKey(p);
@@ -425,17 +420,14 @@ async function renderPuzzle({ showLoader = false } = {}) {
     expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
   }
 
-  // Animate in only after everything is ready
   requestAnimationFrame(() => {
     if (renderToken !== activeRenderToken) return;
 
     for (let i = 0; i < 3; i++) {
       imgEls[i].classList.add('is-visible');
-      expEls[i].classList.add('is-visible');
     }
   });
 
-  // auto-state if already solved
   const id = puzzleId();
   if (solvedOnce[id]) {
     setRevealState(true);
@@ -449,7 +441,6 @@ async function renderPuzzle({ showLoader = false } = {}) {
 
   updateNavUI();
 
-  // preload next puzzle in background
   const nextPos = atEnd ? 0 : (pos + 1);
   preloadPuzzle(PUZZLES[order[nextPos]]);
 
