@@ -12,13 +12,6 @@
 </head>
 
 <body class="theme-fun">
-  <!-- Loader -->
-  <div id="loader" class="loader show" aria-hidden="true">
-    <div class="loader-card">
-      <div class="spinner"></div>
-      <div class="loader-text">Loading…</div>
-    </div>
-  </div>
 
   <!-- Theme toggle -->
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode" title="Toggle theme">
@@ -92,60 +85,67 @@
         </div>
       </div>
 
-      <!-- Clues -->
-      <div class="clues" id="clues">
-        <div class="clue">
-          <div class="clue-media">
-            <img id="img0" class="clue-img" alt="Clue 1">
-            <div class="clue-overlay" id="exp0"></div>
+            <div class="game-panel">
+        <!-- Loader -->
+        <div id="loader" class="loader show" aria-hidden="true">
+          <div class="loader-card">
+            <div class="spinner"></div>
+            <div class="loader-text">Loading…</div>
           </div>
         </div>
 
-        <div class="clue">
-          <div class="clue-media">
-            <img id="img1" class="clue-img" alt="Clue 2">
-            <div class="clue-overlay" id="exp1"></div>
+        <!-- Clues -->
+        <div class="clues" id="clues">
+          <div class="clue">
+            <div class="clue-media">
+              <img id="img0" class="clue-img" alt="Clue 1">
+              <div class="clue-overlay" id="exp0"></div>
+            </div>
+          </div>
+
+          <div class="clue">
+            <div class="clue-media">
+              <img id="img1" class="clue-img" alt="Clue 2">
+              <div class="clue-overlay" id="exp1"></div>
+            </div>
+          </div>
+
+          <div class="clue">
+            <div class="clue-media">
+              <img id="img2" class="clue-img" alt="Clue 3">
+              <div class="clue-overlay" id="exp2"></div>
+            </div>
           </div>
         </div>
 
-        <div class="clue">
-          <div class="clue-media">
-            <img id="img2" class="clue-img" alt="Clue 3">
-            <div class="clue-overlay" id="exp2"></div>
+        <!-- Action area -->
+        <section class="action-area">
+          <div class="answer-slot">
+            <div class="answer-card" id="answerCard">
+              <div class="answer-label">Answer</div>
+              <div class="answer-text" id="answerText"></div>
+            </div>
           </div>
-        </div>
+
+          <div class="progress-row progress-top">
+            <div class="progress-pill" id="progressPill">1 / {{ puzzles|length }}</div>
+          </div>
+
+          <div class="buttons-row nav-3">
+            <button class="button nav-button prev-button" id="prevBtn" type="button" disabled>← Prev</button>
+            <button class="button reveal-button" id="revealBtn" type="button">Reveal</button>
+            <button class="button next-button next-primary" id="nextBtn" type="button" disabled>Next →</button>
+          </div>
+
+          <div class="progress-row progress-bottom">
+            <button class="button next-button small gotit-inline" id="gotItBtn" type="button" disabled>
+              I got it
+            </button>
+            <div class="progress-pill" id="streakPill">Streak: 0</div>
+            <div class="progress-pill" id="bestPill">Best: 0</div>
+          </div>
+        </section>
       </div>
-
-      <!-- Action area -->
-      <section class="action-area">
-        <div class="answer-slot">
-          <div class="answer-card" id="answerCard">
-            <div class="answer-label">Answer</div>
-            <div class="answer-text" id="answerText"></div>
-          </div>
-        </div>
-
-        <!-- Counter alone (top) -->
-        <div class="progress-row progress-top">
-          <div class="progress-pill" id="progressPill">1 / {{ puzzles|length }}</div>
-        </div>
-
-        <!-- Prev / Reveal / Next -->
-        <div class="buttons-row nav-3">
-          <button class="button nav-button prev-button" id="prevBtn" type="button" disabled>← Prev</button>
-          <button class="button reveal-button" id="revealBtn" type="button">Reveal</button>
-          <button class="button next-button next-primary" id="nextBtn" type="button" disabled>Next →</button>
-        </div>
-
-        <!-- Streak row: (Got it) + streak + best -->
-        <div class="progress-row progress-bottom">
-          <button class="button next-button small gotit-inline" id="gotItBtn" type="button" disabled>
-            I got it
-          </button>
-          <div class="progress-pill" id="streakPill">Streak: 0</div>
-          <div class="progress-pill" id="bestPill">Best: 0</div>
-        </div>
-      </section>
     </main>
 
     <footer class="footer">
