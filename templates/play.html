@@ -180,6 +180,9 @@
 
     const themeToggle = document.getElementById('themeToggle');
 
+    const preloadCache = new Map();
+    let activeRenderToken = 0;
+
     // Landing controls
     const landing = document.getElementById('landing');
     const startBtn = document.getElementById('startBtn');
@@ -263,10 +266,60 @@
     }
 
     function preloadPuzzle(p) {
-      (p.clues || []).forEach(path => {
+      if (!p) return Promise.resolve([]);
+
+      const key = p.answer + "|" + (p.clues || []).join("|");
+
+      if (preloadCache.has(key)) {
+        return preloadCache.get(key).promise;
+      }
+
+      const urls = (p.clues || []).map(path => "{{ url_for('static', filename='') }}" + path);
+
+      const images = urls.map(url => {
         const im = new Image();
-        im.src = "{{ url_for('static', filename='') }}" + path;
+        im.src = url;
+        return im;
       });
+
+      const promise = Promise.all(
+        images.map(im => new Promise(resolve => {
+          if (im.complete && im.naturalWidth > 0) {
+            resolve({ ok: true, img: im });
+            return;
+          }
+          im.onload = () => resolve({ ok: true, img: im });
+          im.onerror = () => resolve({ ok: false, img: im });
+        }))
+      );
+
+      preloadCache.set(key, {
+        key,
+        urls,
+        images,
+        promise
+      });
+
+      return promise;
+    }
+
+    function puzzleCacheKey(p) {
+      return p.answer + "|" + (p.clues || []).join("|");
+    }
+
+    function isPuzzlePreloaded(p) {
+      const key = puzzleCacheKey(p);
+      const cached = preloadCache.get(key);
+      if (!cached) return false;
+
+      return cached.images.every(im => im.complete && im.naturalWidth > 0);
+    }
+
+    function clearImagesImmediately() {
+      for (let i = 0; i < 3; i++) {
+        imgEls[i].removeAttribute('src');
+        expEls[i].textContent = "";
+      }
     }
 
     function isRevealed() {
@@ -327,18 +380,13 @@
     }
 
     async function renderPuzzle({ showLoader = false } = {}) {
+      const renderToken = ++activeRenderToken;
       const p = currentPuzzle();
       const atEnd = (pos === order.length - 1);
 
-      if (showLoader) loader.classList.add('show');
-
-      for (let i = 0; i < 3; i++) {
-        const path = p.clues[i] || "";
-        imgEls[i].src = "{{ url_for('static', filename='') }}" + path;
-      }
-
-      for (let i = 0; i < 3; i++) {
-        expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
+      if (showLoader) {
+        loader.classList.add('show');
+        clearImagesImmediately();
       }
 
       // reset per-visit state
@@ -347,6 +395,26 @@
 
       // default to hidden/locked
       setRevealState(false);
+
+      const key = puzzleCacheKey(p);
+      let cached = preloadCache.get(key);
+
+      if (!cached) {
+        await preloadPuzzle(p);
+        cached = preloadCache.get(key);
+      }
+
+      await cached.promise;
+
+      if (renderToken !== activeRenderToken) return;
+
+      for (let i = 0; i < 3; i++) {
+        imgEls[i].src = cached.urls[i] || "";
+      }
+
+      for (let i = 0; i < 3; i++) {
+        expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
+      }
 
       // auto-state if already solved
       const id = puzzleId();
@@ -362,11 +430,10 @@
 
       updateNavUI();
 
-      // preload next
+      // preload next puzzle in background
       const nextPos = atEnd ? 0 : (pos + 1);
       preloadPuzzle(PUZZLES[order[nextPos]]);
 
-      await waitForVisibleImages();
       loader.classList.remove('show');
     }
 
@@ -405,9 +472,12 @@
 
     prevBtn.addEventListener('click', () => {
       if (pos === 0) return;
+
       persistStateOnLeave();
       pos -= 1;
-      renderPuzzle();
+
+      const nextPuzzle = currentPuzzle();
+      renderPuzzle({ showLoader: !isPuzzlePreloaded(nextPuzzle) });
     });
 
     nextBtn.addEventListener('click', () => {
@@ -427,7 +497,9 @@
       } else {
         pos += 1;
       }
-      renderPuzzle();
+
+      const nextPuzzle = currentPuzzle();
+      renderPuzzle({ showLoader: !isPuzzlePreloaded(nextPuzzle) });
     });
 
     // Dropdown
