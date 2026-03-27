@@ -255,13 +255,24 @@ body.dark .dropdown-chevron {
   text-align: center;
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity 120ms ease, transform 180ms ease;
   pointer-events: none;
 }
 
 .reveal-on .clue-overlay {
   opacity: 1;
   transform: translateY(0);
+  animation: clueReveal 0.18s ease;
+}
+
+@keyframes clueReveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ===== Action area ===== */
