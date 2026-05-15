@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Don't Be Dumb</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='ico.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-theme="ink">
+<script>
+  (function(){ var t = localStorage.getItem('dbd_theme'); if (t) document.body.dataset.theme = t; })();
+</script>
+
+<!-- ===================================================== LANDING -->
+<div id="landingScreen" class="screen landing-screen">
+  <div class="landing-ornament"><div class="dot-grid"></div></div>
+
+  <button class="theme-btn landing-theme-btn" id="landingThemeBtn" aria-label="Toggle theme"></button>
+
+  <div class="landing-inner">
+    <div>
+      <h1 class="logotype">Don't be <span class="be">dumb</span><span class="punct">.</span></h1>
+      <p class="tagline" style="margin-top:14px">Three clues. One connection.</p>
+    </div>
+
+    <div class="landing-flow">
+      <span class="flow-pill">3 clues</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-pill">2 brain cells</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-one">1 answer</span>
+    </div>
+
+    <div class="start-cluster">
+      <button class="btn accent start-btn" id="startBtn" type="button">
+        Start <span class="kbd">SPACE</span>
+      </button>
+      <div class="start-cat-row">
+        <span>Category</span>
+        <select class="cat-select" id="catSelectLanding">
+          <option value="Random" {% if category == 'Random' %}selected{% endif %}>Random</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================== GAME -->
+<div id="gameScreen" class="screen game-screen">
+
+  <div class="rail">
+    <div class="brand" id="gameBrand" title="Quit game">Don't Be Dumb <span class="dot"></span></div>
+    <button class="theme-btn" id="gameThemeBtn" aria-label="Toggle theme"></button>
+  </div>
+
+  <div class="game-body">
+
+    <!-- Stats row -->
+    <div class="game-stats-row">
+      <div class="stats-chips">
+        <div class="chip"><span class="pulse"></span>&nbsp;<strong id="posChip">1</strong>&thinsp;/&thinsp;<span id="totalChip">?</span></div>
+        <div class="chip">Streak&nbsp;<strong id="streakChip">0</strong></div>
+        <div class="chip">Solved&nbsp;<strong id="solvedChip">0</strong></div>
+        <div class="chip" id="timerChip">0:00</div>
+      </div>
+      <div class="stats-right">
+        <div class="chip" id="puzzleCatChip" style="display:none"><strong id="puzzleCatName"></strong></div>
+        <select class="cat-select" id="catSelectGame">
+          <option value="Random" {% if category == 'Random' %}selected{% endif %}>Random</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Clue cards -->
+    <div class="clue-row" id="clueRow">
+      <div class="clue" data-i="0" id="clue0">
+        <div class="clue-skeleton"></div>
+        <img class="clue-photo" id="img0" alt="Clue 1">
+        <div class="clue-number">1</div>
+        <div class="clue-overlay" id="exp0">
+          <div class="ov-text" id="expText0"></div>
+        </div>
+      </div>
+      <div class="clue" data-i="1" id="clue1">
+        <div class="clue-skeleton"></div>
+        <img class="clue-photo" id="img1" alt="Clue 2">
+        <div class="clue-number">2</div>
+        <div class="clue-overlay" id="exp1">
+          <div class="ov-text" id="expText1"></div>
+        </div>
+      </div>
+      <div class="clue" data-i="2" id="clue2">
+        <div class="clue-skeleton"></div>
+        <img class="clue-photo" id="img2" alt="Clue 3">
+        <div class="clue-number">3</div>
+        <div class="clue-overlay" id="exp2">
+          <div class="ov-text" id="expText2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Answer band -->
+    <div class="answer-band">
+      <div class="answer-left">
+        <div class="answer-prompt">Answer</div>
+        <div class="answer-text" id="answerText"></div>
+      </div>
+      <div class="answer-actions" id="answerActions"></div>
+    </div>
+
+  </div>
+
+  <!-- Bottom rail -->
+  <div class="bottom-rail">
+    <div class="nav-group">
+      <button class="btn ghost iconish" id="prevBtn" disabled title="Previous (←)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <button class="btn ghost iconish" id="nextBtn" disabled title="Next (→)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="key-hints">
+      <span><kbd>SPACE</kbd> reveal / score</span>
+      <span><kbd>←</kbd><kbd>→</kbd> navigate</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======================================================= END -->
+<div id="endScreen" class="screen end-screen">
+  <div class="end-card">
+    <div>
+      <h2 id="endGrade">Sharp.</h2>
+      <p class="end-subtitle" id="endSubtitle"></p>
+    </div>
+    <div class="end-stats">
+      <div class="end-stat">
+        <div class="label">Solved</div>
+        <div class="value accent" id="endSolved">0</div>
+      </div>
+      <div class="end-stat">
+        <div class="label">Best Streak</div>
+        <div class="value" id="endBest">0</div>
+      </div>
+      <div class="end-stat">
+        <div class="label">Avg Time</div>
+        <div class="value" id="endAvgTime">—</div>
+      </div>
+      <div class="end-stat">
+        <div class="label">Total Time</div>
+        <div class="value" id="endTotalTime">—</div>
+      </div>
+    </div>
+    <div>
+      <button class="btn primary" id="homeBtn" type="button">← Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- Celebration layer -->
+<div id="celebLayer" class="celebration" style="display:none"></div>
+
+<!-- Milestone banner -->
+<div id="milestoneBanner" class="milestone" style="display:none"></div>
+
+<!-- Quit modal -->
+<div id="quitOverlay" class="quit-overlay" style="display:none" aria-modal="true" role="dialog">
+  <div class="quit-card">
+    <p class="quit-title">End the game?</p>
+    <p class="quit-sub">Your progress won't be saved.</p>
+    <div class="quit-actions">
+      <button class="btn primary" id="quitConfirmBtn">End game</button>
+      <button class="btn ghost" id="quitCancelBtn">Keep playing</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PUZZLES       = {{ puzzles|tojson }};
+const MODE          = "{{ category }}";
+const STATIC_PREFIX = "{{ url_for('static', filename='') }}";
+
+// ── State ───────────────────────────────────────────────────────
+let order            = [];
+let pos              = 0;
+let streak           = Number(localStorage.getItem('dbd_streak') || 0);
+let best             = Number(localStorage.getItem('dbd_best')   || 0);
+let sessionBestStreak = 0;
+let solvedOnce       = {};
+let scoredThisPuzzle = false;
+let timerStart       = null;
+let timerIv          = null;
+let puzzleTimes      = [];
+let preloadCache     = new Map();
+let renderToken      = 0;
+let totalRevealed    = 0;
+
+// ── Element refs ────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const imgEls    = [0,1,2].map(i => $('img'+i));
+const clueEls   = [0,1,2].map(i => $('clue'+i));
+const expTexts  = [0,1,2].map(i => $('expText'+i));
+const posChip   = $('posChip');
+const totalChip = $('totalChip');
+const streakChip= $('streakChip');
+const solvedChip= $('solvedChip');
+const timerChip = $('timerChip');
+const answerEl  = $('answerText');
+const actionsEl = $('answerActions');
+const prevBtn   = $('prevBtn');
+const nextBtn   = $('nextBtn');
+const progBar   = $('progressBar');
+const puzzleCatChip  = $('puzzleCatChip');
+const puzzleCatName  = $('puzzleCatName');
+const catSelectGame   = $('catSelectGame');
+const catSelectLanding = $('catSelectLanding');
+
+// ── Theme ───────────────────────────────────────────────────────
+const SUN  = '☀️';
+const MOON = '🌙';
+
+function applyTheme(t) {
+  document.body.dataset.theme = t;
+  localStorage.setItem('dbd_theme', t);
+  [$('landingThemeBtn'), $('gameThemeBtn')].forEach(btn => {
+    if (btn) btn.textContent = t === 'ink' ? SUN : MOON;
+  });
+}
+applyTheme(document.body.dataset.theme || 'ink');
+
+[$('landingThemeBtn'), $('gameThemeBtn')].forEach(btn => {
+  if (btn) btn.addEventListener('click', () => {
+    applyTheme(document.body.dataset.theme === 'ink' ? 'paper' : 'ink');
+  });
+});
+
+// ── Screen management ───────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(name + 'Screen').classList.add('active');
+}
+
+// ── Sounds (Web Audio) ──────────────────────────────────────────
+let audioCtx = null;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone(freq, startTime, dur, vol, type = 'sine') {
+  const ctx = getCtx();
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(vol, startTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+  osc.start(startTime); osc.stop(startTime + dur + 0.01);
+}
+function playReveal() {
+  try {
+    const t = getCtx().currentTime;
+    tone(520, t,        0.35, 0.18);
+    tone(660, t + 0.08, 0.30, 0.15);
+    tone(780, t + 0.16, 0.28, 0.13);
+  } catch(e) {}
+}
+function playGotIt() {
+  try {
+    const t = getCtx().currentTime;
+    tone(523, t,        0.4, 0.18);
+    tone(659, t + 0.03, 0.4, 0.14);
+    tone(784, t + 0.06, 0.4, 0.12);
+    tone(1047,t + 0.12, 0.5, 0.10);
+  } catch(e) {}
+}
+function playNext() {
+  try {
+    const t = getCtx().currentTime;
+    tone(440, t, 0.12, 0.08, 'triangle');
+  } catch(e) {}
+}
+
+// ── Celebrations ────────────────────────────────────────────────
+const COLORS = ['#a78bfa','#34d399','#f472b6','#fbbf24','#38bdf8','#f87171'];
+
+function celebrate() {
+  const layer = $('celebLayer');
+  layer.innerHTML = '';
+  layer.style.display = 'block';
+  const types = ['burst', 'rain', 'starburst'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  layer.className = 'celebration ' + type;
+
+  if (type === 'burst') {
+    for (let i = 0; i < 48; i++) {
+      const p = document.createElement('div');
+      p.className = 'piece';
+      const angle = (i / 48) * 360 + Math.random() * 15;
+      const dist  = 180 + Math.random() * 280;
+      const rad   = angle * Math.PI / 180;
+      p.style.cssText = `
+        background: ${COLORS[i % COLORS.length]};
+        animation-delay: ${Math.random() * 80}ms;
+        --dx: ${Math.cos(rad) * dist}px;
+        --dy: ${Math.sin(rad) * dist}px;
+        --rot: ${Math.random() * 600 - 300}deg;
+      `;
+      layer.appendChild(p);
+    }
+  } else if (type === 'rain') {
+    for (let i = 0; i < 60; i++) {
+      const p = document.createElement('div');
+      p.className = 'piece';
+      p.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: ${-10 - Math.random() * 30}px;
+        background: ${COLORS[i % COLORS.length]};
+        animation-delay: ${Math.random() * 400}ms;
+        animation-duration: ${1400 + Math.random() * 600}ms;
+        --dx: ${(Math.random() - 0.5) * 120}px;
+        --rot: ${Math.random() * 720}deg;
+      `;
+      layer.appendChild(p);
+    }
+  } else {
+    const puff = document.createElement('div');
+    puff.className = 'puff';
+    layer.appendChild(puff);
+    for (let i = 0; i < 14; i++) {
+      const b = document.createElement('div');
+      b.className = 'beam';
+      b.style.setProperty('--ang', (i * 360 / 14) + 'deg');
+      b.style.background = `linear-gradient(to bottom, ${COLORS[i % COLORS.length]}, transparent)`;
+      layer.appendChild(b);
+    }
+  }
+  setTimeout(() => { layer.style.display = 'none'; layer.innerHTML = ''; }, 1800);
+}
+
+// ── Milestone banners ───────────────────────────────────────────
+const MILESTONES = [3, 5, 10, 15, 20, 25, 30];
+let shownMilestones = new Set();
+
+function checkMilestone(s) {
+  if (MILESTONES.includes(s) && !shownMilestones.has(s)) {
+    shownMilestones.add(s);
+    showMilestone(s);
+  }
+}
+
+function showMilestone(n) {
+  const el = $('milestoneBanner');
+  el.innerHTML = `<span class="ms-num">${n}</span><div><div style="font-size:18px">streak</div><div class="ms-sub">in a row</div></div>`;
+  el.style.display = 'flex';
+  el.className = 'milestone ms-enter';
+  clearTimeout(el._t1); clearTimeout(el._t2);
+  el._t1 = setTimeout(() => { el.className = 'milestone ms-exit'; }, 1700);
+  el._t2 = setTimeout(() => { el.style.display = 'none'; }, 1980);
+}
+
+// ── Timer ───────────────────────────────────────────────────────
+function startTimer() {
+  timerStart = Date.now();
+  clearInterval(timerIv);
+  timerIv = setInterval(() => {
+    if (!timerStart) return;
+    const s = (Date.now() - timerStart) / 1000;
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    timerChip.textContent = m + ':' + String(sec).padStart(2, '0');
+  }, 250);
+}
+function stopTimer() {
+  clearInterval(timerIv);
+  if (timerStart) {
+    puzzleTimes.push((Date.now() - timerStart) / 1000);
+    timerStart = null;
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────
+function puzzleId()      { return order[pos]; }
+function currentPuzzle() { return PUZZLES[order[pos]]; }
+function isRevealed()    { return document.body.classList.contains('reveal-on'); }
+
+function shuffle(a) {
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function buildOrder() {
+  order = [...Array(PUZZLES.length).keys()];
+  shuffle(order);
+  pos = 0;
+}
+
+function fmtTime(s) {
+  if (!s) return '—';
+  if (s < 60) return Math.round(s) + 's';
+  return Math.floor(s / 60) + 'm' + String(Math.round(s % 60)).padStart(2, '0') + 's';
+}
+
+// ── UI updates ──────────────────────────────────────────────────
+function updateStreak() {
+  streakChip.textContent = streak;
+  localStorage.setItem('dbd_streak', streak);
+  if (streak > best) { best = streak; localStorage.setItem('dbd_best', best); }
+  if (streak > sessionBestStreak) sessionBestStreak = streak;
+}
+function updateSolved() { solvedChip.textContent = Object.keys(solvedOnce).length; }
+function updateNav() {
+  posChip.textContent   = pos + 1;
+  totalChip.textContent = order.length;
+  progBar.style.width   = ((pos + 1) / order.length * 100) + '%';
+  prevBtn.disabled = (pos === 0);
+}
+
+function isRTL(text) {
+  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text);
+}
+
+function renderAnswerHidden() {
+  answerEl.dir = '';
+  answerEl.innerHTML = '<span class="caret"></span>';
+}
+
+function renderAnswerRevealed(answer) {
+  answerEl.innerHTML = '';
+  if (isRTL(answer)) {
+    answerEl.dir = 'rtl';
+    const span = document.createElement('span');
+    span.className = 'ch';
+    span.textContent = answer;
+    answerEl.appendChild(span);
+  } else {
+    answerEl.dir = '';
+    let delay = 0;
+    for (let i = 0; i < answer.length; i++) {
+      const ch = document.createElement('span');
+      ch.className = answer[i] === ' ' ? 'ch sp' : 'ch';
+      ch.textContent = answer[i] === ' ' ? ' ' : answer[i];
+      ch.style.animationDelay = delay + 'ms';
+      delay += answer[i] === ' ' ? 0 : 28;
+      answerEl.appendChild(ch);
+    }
+  }
+}
+
+function renderActions() {
+  actionsEl.innerHTML = '';
+  const id = puzzleId();
+  if (!isRevealed()) {
+    const btn = document.createElement('button');
+    btn.className = 'btn accent';
+    btn.innerHTML = `Reveal <span class="kbd">SPACE</span>`;
+    btn.onclick = doReveal;
+    actionsEl.appendChild(btn);
+  } else {
+    if (!solvedOnce[id]) {
+      const gotIt = document.createElement('button');
+      gotIt.className = scoredThisPuzzle ? 'btn toggled-on' : 'btn primary';
+      gotIt.id = 'gotItBtn';
+      gotIt.innerHTML = scoredThisPuzzle
+        ? `✓ Got it! <span class="kbd">SPACE</span>`
+        : `I got it <span class="kbd">SPACE</span>`;
+      gotIt.onclick = doToggleGotIt;
+      actionsEl.appendChild(gotIt);
+    }
+    const nxt = document.createElement('button');
+    nxt.className = 'btn';
+    const atEnd = (pos === order.length - 1);
+    nxt.innerHTML = atEnd ? 'See results →' : `Next <span class="kbd">→</span>`;
+    nxt.onclick = doNext;
+    actionsEl.appendChild(nxt);
+  }
+}
+
+function updatePuzzleCat() {
+  if (MODE === 'Random') {
+    const cat = currentPuzzle().category || '';
+    puzzleCatName.textContent = cat;
+    puzzleCatChip.style.display = cat ? 'flex' : 'none';
+  } else {
+    puzzleCatChip.style.display = 'none';
+  }
+}
+
+// ── Preloading ──────────────────────────────────────────────────
+function cacheKey(p) { return p.answer + '|' + (p.clues||[]).join('|'); }
+
+function preload(p) {
+  if (!p) return Promise.resolve();
+  const k = cacheKey(p);
+  if (preloadCache.has(k)) return preloadCache.get(k).promise;
+  const urls   = (p.clues||[]).map(c => STATIC_PREFIX + c);
+  const images = urls.map(u => { const im = new Image(); im.src = u; return im; });
+  const promise = Promise.all(images.map(im => new Promise(r => {
+    if (im.complete && im.naturalWidth > 0) return r();
+    im.onload = r; im.onerror = r;
+  })));
+  preloadCache.set(k, { urls, images, promise });
+  return promise;
+}
+
+// ── Reveal state ────────────────────────────────────────────────
+function setRevealed(on) {
+  document.body.classList.toggle('reveal-on', on);
+  const p = currentPuzzle();
+  if (on) {
+    renderAnswerRevealed(p.answer);
+    clueEls.forEach(c => c.classList.add('revealed'));
+  } else {
+    renderAnswerHidden();
+    clueEls.forEach(c => c.classList.remove('revealed'));
+  }
+  renderActions();
+  prevBtn.disabled = (pos === 0);
+  nextBtn.disabled = !on;
+}
+
+// ── Render puzzle ───────────────────────────────────────────────
+async function renderPuzzle() {
+  const token = ++renderToken;
+
+  scoredThisPuzzle = false;
+  document.body.classList.remove('reveal-on');
+  clueEls.forEach(c => { c.classList.remove('revealed'); });
+  imgEls.forEach((img, i) => { img.classList.remove('loaded'); img.removeAttribute('src'); expTexts[i].textContent = ''; });
+
+  updateNav();
+  updatePuzzleCat();
+
+  renderAnswerHidden();
+  renderActions();
+  nextBtn.disabled = true;
+  prevBtn.disabled = (pos === 0);
+
+  startTimer();
+
+  const p = currentPuzzle();
+  const k = cacheKey(p);
+  if (!preloadCache.has(k)) preload(p);
+  const cached = preloadCache.get(k);
+  await cached.promise;
+  if (token !== renderToken) return;
+
+  for (let i = 0; i < 3; i++) {
+    imgEls[i].src = cached.urls[i] || '';
+    expTexts[i].textContent = (p.explanations && p.explanations[i]) || '';
+  }
+
+  await Promise.all(imgEls.map(img => new Promise(r => {
+    if (img.complete && img.naturalWidth > 0) return r();
+    img.onload = r; img.onerror = r;
+  })));
+  if (token !== renderToken) return;
+
+  requestAnimationFrame(() => {
+    if (token !== renderToken) return;
+    imgEls.forEach(img => img.classList.add('loaded'));
+  });
+
+  if (solvedOnce[puzzleId()]) {
+    stopTimer();
+    setRevealed(true);
+    scoredThisPuzzle = true;
+    renderActions();
+  }
+
+  const atEnd = (pos === order.length - 1);
+  preload(PUZZLES[order[atEnd ? 0 : pos + 1]]);
+}
+
+// ── Game actions ────────────────────────────────────────────────
+function doReveal() {
+  if (isRevealed() || solvedOnce[puzzleId()]) return;
+  stopTimer();
+  totalRevealed++;
+  setRevealed(true);
+  playReveal();
+}
+
+function doToggleGotIt() {
+  if (!isRevealed() || solvedOnce[puzzleId()]) return;
+  if (!scoredThisPuzzle) {
+    scoredThisPuzzle = true;
+    streak++;
+    updateStreak();
+    updateSolved();
+    checkMilestone(streak);
+    celebrate();
+    playGotIt();
+  } else {
+    scoredThisPuzzle = false;
+    streak = Math.max(0, streak - 1);
+    updateStreak();
+  }
+  renderActions();
+}
+
+function persistOnLeave() {
+  const id = puzzleId();
+  if (isRevealed() && scoredThisPuzzle) solvedOnce[id] = true;
+  else if (isRevealed() && !scoredThisPuzzle && !solvedOnce[id]) {
+    streak = 0; updateStreak();
+  }
+}
+
+function doNext() {
+  if (!isRevealed()) return;
+  persistOnLeave();
+  playNext();
+  const atEnd = (pos === order.length - 1);
+  if (atEnd) {
+    showEndScreen();
+  } else {
+    pos++;
+    renderPuzzle();
+  }
+}
+
+function doPrev() {
+  if (pos === 0) return;
+  persistOnLeave();
+  pos--;
+  renderPuzzle();
+}
+
+// ── End screen ──────────────────────────────────────────────────
+function grade(solved, total) {
+  const p = total > 0 ? solved / total : 0;
+  if (p === 1)   return { g: 'Genius.',        s: `Perfect. You got every single one.` };
+  if (p >= 0.8)  return { g: 'Sharp.',         s: `${solved} out of ${total}. Genuinely impressive.` };
+  if (p >= 0.6)  return { g: 'Decent.',        s: `${solved} out of ${total}. Room to improve.` };
+  if (p >= 0.4)  return { g: 'Getting there.', s: `${solved} out of ${total}. Keep at it.` };
+  if (p >= 0.2)  return { g: 'Rough.',         s: `${solved} out of ${total}. Yikes.` };
+  return               { g: 'Yikes.',          s: `${solved} out of ${total}. Did you even try?` };
+}
+
+function showEndScreen() {
+  clearInterval(timerIv);
+  const solved    = Object.keys(solvedOnce).length + (scoredThisPuzzle ? 1 : 0);
+  const total     = order.length;
+  const totalSecs = puzzleTimes.reduce((a, b) => a + b, 0);
+  const avgTime   = puzzleTimes.length ? totalSecs / puzzleTimes.length : null;
+
+  const { g, s } = grade(solved, total);
+  $('endGrade').textContent    = g;
+  $('endSubtitle').textContent = s;
+  $('endSolved').textContent   = solved + '/' + total;
+  $('endBest').textContent     = sessionBestStreak;
+  $('endAvgTime').textContent  = fmtTime(avgTime);
+  $('endTotalTime').textContent = fmtTime(totalSecs || null);
+  showScreen('end');
+}
+
+// ── Quit modal ───────────────────────────────────────────────────
+function goHome() {
+  clearInterval(timerIv);
+  solvedOnce = {}; scoredThisPuzzle = false;
+  puzzleTimes = []; totalRevealed = 0;
+  shownMilestones = new Set();
+  sessionBestStreak = 0;
+  updateSolved(); updateStreak();
+  showScreen('landing');
+}
+
+function openQuitModal() {
+  $('quitOverlay').style.display = 'flex';
+}
+function closeQuitModal() {
+  $('quitOverlay').style.display = 'none';
+}
+
+$('gameBrand').addEventListener('click', openQuitModal);
+$('quitConfirmBtn').addEventListener('click', () => { closeQuitModal(); goHome(); });
+$('quitCancelBtn').addEventListener('click', closeQuitModal);
+$('quitOverlay').addEventListener('click', e => { if (e.target === $('quitOverlay')) closeQuitModal(); });
+
+// ── Home button ─────────────────────────────────────────────────
+$('homeBtn').addEventListener('click', () => {
+  solvedOnce = {}; scoredThisPuzzle = false;
+  puzzleTimes = []; totalRevealed = 0;
+  shownMilestones = new Set();
+  sessionBestStreak = 0;
+  updateSolved(); updateStreak();
+  showScreen('landing');
+});
+
+// ── Category changes ─────────────────────────────────────────────
+catSelectLanding.addEventListener('change', e => {
+  window.location.href = '/?cat=' + encodeURIComponent(e.target.value);
+});
+catSelectGame.addEventListener('change', e => {
+  sessionStorage.setItem('dbd_skip_landing', '1');
+  window.location.href = '/?cat=' + encodeURIComponent(e.target.value);
+});
+
+// ── Nav buttons ─────────────────────────────────────────────────
+prevBtn.addEventListener('click', doPrev);
+nextBtn.addEventListener('click', doNext);
+
+// ── Keyboard ────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = e.target ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  if (e.code === 'Space') {
+    e.preventDefault();
+    const ls = $('landingScreen');
+    if (ls.classList.contains('active')) { doStart(); return; }
+    if (!isRevealed()) doReveal();
+    else doToggleGotIt();
+    return;
+  }
+  if (e.key === 'ArrowRight' && isRevealed()) { doNext(); return; }
+  if (e.key === 'ArrowLeft'  && !prevBtn.disabled) { doPrev(); return; }
+  if (e.key.toLowerCase() === 'g' && isRevealed() && !solvedOnce[puzzleId()]) { doToggleGotIt(); }
+});
+
+// ── Start ────────────────────────────────────────────────────────
+function doStart() {
+  buildOrder();
+  sessionBestStreak = 0;
+  puzzleTimes = []; totalRevealed = 0;
+  solvedOnce = {}; scoredThisPuzzle = false;
+  shownMilestones = new Set();
+  updateStreak();
+  updateSolved();
+  totalChip.textContent = order.length;
+  progBar.style.width = '0%';
+  showScreen('game');
+  renderPuzzle();
+}
+
+$('startBtn').addEventListener('click', doStart);
+
+// ── Init ─────────────────────────────────────────────────────────
+if (window.location.search.includes('cat=')) {
+  history.replaceState(null, '', '/');
+}
+
+if (sessionStorage.getItem('dbd_skip_landing') === '1') {
+  sessionStorage.removeItem('dbd_skip_landing');
+  doStart();
+} else {
+  showScreen('landing');
+}
+</script>
+</body>
+</html>
