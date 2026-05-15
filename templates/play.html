@@ -2,808 +2,766 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Three 2 One</title>
+  <title>Don't Be Dumb</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='ico.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+<body data-theme="ink">
+<script>
+  (function(){ var t = localStorage.getItem('dbd_theme'); if (t) document.body.dataset.theme = t; })();
+</script>
 
-<body class="theme-fun">
+<!-- ===================================================== LANDING -->
+<div id="landingScreen" class="screen landing-screen">
+  <div class="landing-ornament"><div class="dot-grid"></div></div>
 
-  <!-- Theme toggle -->
-  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle dark mode" title="Toggle theme">
-    🌙
-  </button>
+  <button class="theme-btn landing-theme-btn" id="landingThemeBtn" aria-label="Toggle theme"></button>
 
-  <!-- Landing overlay (normally shows on refresh; skipped once after category change) -->
-  <div id="landing" class="landing-overlay" aria-hidden="false">
-    <div class="landing-card answer-card visible">
-      <br>
-      <div class="answer-label">321: THREE CLUES 2 ONE CONNECTION</div>
+  <div class="landing-inner">
+    <div>
+      <h1 class="logotype">Don't be <span class="be">dumb</span><span class="punct">.</span></h1>
+      <p class="tagline" style="margin-top:14px">Three clues. One connection.</p>
+    </div>
 
-      <div class="landing-title">Don't Be Dumb</div>
+    <div class="landing-flow">
+      <span class="flow-pill">3 clues</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-pill">2 brain cells</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-one">1 answer</span>
+    </div>
 
-      <div class="landing-flow" aria-hidden="true">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-        <div class="arrow">→</div>
-        <div class="one">🔗</div>
-      </div>
-
-      <ul class="landing-bullets">
-        <li>Keyboard Shortcuts:</li>
-      </ul>
-
-      <div class="landing-sub">Space = Reveal → Got it → Undo</div>
-      <div class="landing-sub">Arrow keys = Previous, Next (after reveal)</div>
-
-      <br>
-      <div class="buttons-row nav-3 landing-actions">
-        <button class="button reveal-button" id="startBtn" type="button">Start</button>
-        <button class="button next-button" id="openCatBtn" type="button">Category</button>
-      </div>
-      <br>
-
-      <div id="landingCats" class="landing-cats hidden">
-        <div class="landing-cats-row">
-          <button class="button nav-button" data-cat="Random" type="button">Random</button>
+    <div class="start-cluster">
+      <button class="btn accent start-btn" id="startBtn" type="button">
+        Start <span class="kbd">SPACE</span>
+      </button>
+      <div class="start-cat-row">
+        <span>Category</span>
+        <select class="cat-select" id="catSelectLanding">
+          <option value="Random" {% if category == 'Random' %}selected{% endif %}>Random</option>
           {% for cat in categories %}
-            <button class="button nav-button" data-cat="{{ cat }}" type="button">{{ cat }}</button>
+          <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
           {% endfor %}
-        </div>
-        <div class="landing-note">Changing category reloads the page.</div>
+        </select>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="page">
-    <header class="topbar">
-      <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="321: Three 2 One">
-    </header>
+<!-- ====================================================== GAME -->
+<div id="gameScreen" class="screen game-screen">
 
-    <header class="topbar">
-      <h5 style="text-align: center;">Three clues to one connection. Don't be dumb.</h5>
-    </header>
-
-    <main class="stage">
-      <!-- Category dropdown -->
-      <div class="category-row">
-        <div class="dropdown" id="catDropdown">
-          <button class="dropdown-btn" id="catBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
-            <span class="dropdown-value" id="catValue">{{ category }}</span>
-            <span class="dropdown-chevron" aria-hidden="true">▾</span>
-          </button>
-
-          <div class="dropdown-menu" id="catMenu" role="listbox" tabindex="-1" aria-label="Choose category">
-            <div class="dropdown-item" role="option" data-category="Random">Random</div>
-            {% for cat in categories %}
-              <div class="dropdown-item" role="option" data-category="{{ cat }}">{{ cat }}</div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
-     <div class="game-panel">
-
-  <!-- Clues -->
-  <div class="clues" id="clues">
-
-    <!-- Loader (ONLY for clues area) -->
-    <div id="loader" class="loader show" aria-hidden="true">
-      <div class="loader-card">
-        <div class="spinner"></div>
-        <div class="loader-text">Loading</div>
-      </div>
-    </div>
-
-    <div class="clue">
-      <div class="clue-media">
-        <img id="img0" class="clue-img" alt="Clue 1">
-        <div class="clue-overlay" id="exp0"></div>
-      </div>
-    </div>
-
-    <div class="clue">
-      <div class="clue-media">
-        <img id="img1" class="clue-img" alt="Clue 2">
-        <div class="clue-overlay" id="exp1"></div>
-      </div>
-    </div>
-
-    <div class="clue">
-      <div class="clue-media">
-        <img id="img2" class="clue-img" alt="Clue 3">
-        <div class="clue-overlay" id="exp2"></div>
-      </div>
-    </div>
-
+  <div class="rail">
+    <div class="brand" id="gameBrand" title="Quit game">Don't Be Dumb <span class="dot"></span></div>
+    <button class="theme-btn" id="gameThemeBtn" aria-label="Toggle theme"></button>
   </div>
 
-  <!-- Action area -->
-  <section class="action-area">
+  <div class="game-body">
 
-    <div class="answer-slot">
-      <div class="answer-card" id="answerCard">
-        <div class="answer-label">Answer</div>
+    <!-- Stats row -->
+    <div class="game-stats-row">
+      <div class="stats-chips">
+        <div class="chip"><span class="pulse"></span>&nbsp;<strong id="posChip">1</strong>&thinsp;/&thinsp;<span id="totalChip">?</span></div>
+        <div class="chip">Streak&nbsp;<strong id="streakChip">0</strong></div>
+        <div class="chip">Solved&nbsp;<strong id="solvedChip">0</strong></div>
+        <div class="chip" id="timerChip">0:00</div>
+      </div>
+      <div class="stats-right">
+        <div class="chip" id="puzzleCatChip" style="display:none"><strong id="puzzleCatName"></strong></div>
+        <select class="cat-select" id="catSelectGame">
+          <option value="Random" {% if category == 'Random' %}selected{% endif %}>Random</option>
+          {% for cat in categories %}
+          <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Clue cards -->
+    <div class="clue-row" id="clueRow">
+      <div class="clue" data-i="0" id="clue0">
+        <div class="clue-skeleton"></div>
+        <img class="clue-photo" id="img0" alt="Clue 1">
+        <div class="clue-number">1</div>
+        <div class="clue-overlay" id="exp0">
+          <div class="ov-text" id="expText0"></div>
+        </div>
+      </div>
+      <div class="clue" data-i="1" id="clue1">
+        <div class="clue-skeleton"></div>
+        <img class="clue-photo" id="img1" alt="Clue 2">
+        <div class="clue-number">2</div>
+        <div class="clue-overlay" id="exp1">
+          <div class="ov-text" id="expText1"></div>
+        </div>
+      </div>
+      <div class="clue" data-i="2" id="clue2">
+        <div class="clue-skeleton"></div>
+        <img class="clue-photo" id="img2" alt="Clue 3">
+        <div class="clue-number">3</div>
+        <div class="clue-overlay" id="exp2">
+          <div class="ov-text" id="expText2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Answer band -->
+    <div class="answer-band">
+      <div class="answer-left">
+        <div class="answer-prompt">Answer</div>
         <div class="answer-text" id="answerText"></div>
       </div>
+      <div class="answer-actions" id="answerActions"></div>
     </div>
 
-    <div class="progress-row progress-top">
-      <div class="progress-pill" id="progressPill">1 / {{ puzzles|length }}</div>
-    </div>
-
-    <div class="buttons-row nav-3">
-      <button class="button nav-button prev-button" id="prevBtn" type="button" disabled>
-        ← Prev
-      </button>
-
-      <button class="button reveal-button" id="revealBtn" type="button">
-        Reveal
-      </button>
-
-      <button class="button next-button next-primary" id="nextBtn" type="button" disabled>
-        Next →
-      </button>
-    </div>
-
-    <div class="progress-row progress-bottom">
-      <button class="button next-button small gotit-inline" id="gotItBtn" type="button" disabled>
-        I got it
-      </button>
-
-      <div class="progress-pill" id="streakPill">Streak: 0</div>
-      <div class="progress-pill" id="bestPill">Best: 0</div>
-    </div>
-
-  </section>
-
-</div>
-    </main>
-
-    <footer class="footer">
-      <p class="credit">Created by <code>420TN</code></p>
-    </footer>
   </div>
 
-  <script>
-    const PUZZLES = {{ puzzles|tojson }};
-    const MODE = "{{ category }}";
+  <!-- Bottom rail -->
+  <div class="bottom-rail">
+    <div class="nav-group">
+      <button class="btn ghost iconish" id="prevBtn" disabled title="Previous (←)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
+      <button class="btn ghost iconish" id="nextBtn" disabled title="Next (→)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="key-hints">
+      <span><kbd>SPACE</kbd> reveal / score</span>
+      <span><kbd>←</kbd><kbd>→</kbd> navigate</span>
+    </div>
+  </div>
 
-    const imgEls = [document.getElementById('img0'), document.getElementById('img1'), document.getElementById('img2')];
-    const expEls = [document.getElementById('exp0'), document.getElementById('exp1'), document.getElementById('exp2')];
+</div>
 
-    const prevBtn = document.getElementById('prevBtn');
-    const revealBtn = document.getElementById('revealBtn');
-    const nextBtn = document.getElementById('nextBtn');
+<!-- ======================================================= END -->
+<div id="endScreen" class="screen end-screen">
+  <div class="end-card">
+    <div>
+      <h2 id="endGrade">Sharp.</h2>
+      <p class="end-subtitle" id="endSubtitle"></p>
+    </div>
+    <div class="end-stats">
+      <div class="end-stat">
+        <div class="label">Solved</div>
+        <div class="value accent" id="endSolved">0</div>
+      </div>
+      <div class="end-stat">
+        <div class="label">Best Streak</div>
+        <div class="value" id="endBest">0</div>
+      </div>
+      <div class="end-stat">
+        <div class="label">Avg Time</div>
+        <div class="value" id="endAvgTime">—</div>
+      </div>
+      <div class="end-stat">
+        <div class="label">Total Time</div>
+        <div class="value" id="endTotalTime">—</div>
+      </div>
+    </div>
+    <div>
+      <button class="btn primary" id="homeBtn" type="button">← Home</button>
+    </div>
+  </div>
+</div>
 
-    const loader = document.getElementById('loader');
-    const progressPill = document.getElementById('progressPill');
-    const streakPill = document.getElementById('streakPill');
-    const bestPill = document.getElementById('bestPill');
-    const answerCard = document.getElementById('answerCard');
-    const answerText = document.getElementById('answerText');
+<!-- Celebration layer -->
+<div id="celebLayer" class="celebration" style="display:none"></div>
 
-    const gotItBtn = document.getElementById('gotItBtn');
+<!-- Milestone banner -->
+<div id="milestoneBanner" class="milestone" style="display:none"></div>
 
-    const catDropdown = document.getElementById('catDropdown');
-    const catBtn = document.getElementById('catBtn');
-    const catMenu = document.getElementById('catMenu');
-    const catValue = document.getElementById('catValue');
+<!-- Quit modal -->
+<div id="quitOverlay" class="quit-overlay" style="display:none" aria-modal="true" role="dialog">
+  <div class="quit-card">
+    <p class="quit-title">End the game?</p>
+    <p class="quit-sub">Your progress won't be saved.</p>
+    <div class="quit-actions">
+      <button class="btn primary" id="quitConfirmBtn">End game</button>
+      <button class="btn ghost" id="quitCancelBtn">Keep playing</button>
+    </div>
+  </div>
+</div>
 
-    const themeToggle = document.getElementById('themeToggle');
+<script>
+const PUZZLES       = {{ puzzles|tojson }};
+const MODE          = "{{ category }}";
+const STATIC_PREFIX = "{{ url_for('static', filename='') }}";
 
-    const preloadCache = new Map();
-    let activeRenderToken = 0;
+// ── State ───────────────────────────────────────────────────────
+let order            = [];
+let pos              = 0;
+let streak           = Number(localStorage.getItem('dbd_streak') || 0);
+let best             = Number(localStorage.getItem('dbd_best')   || 0);
+let sessionBestStreak = 0;
+let solvedOnce       = {};
+let scoredThisPuzzle = false;
+let timerStart       = null;
+let timerIv          = null;
+let puzzleTimes      = [];
+let preloadCache     = new Map();
+let renderToken      = 0;
+let totalRevealed    = 0;
 
-    // Landing controls
-    const landing = document.getElementById('landing');
-    const startBtn = document.getElementById('startBtn');
-    const openCatBtn = document.getElementById('openCatBtn');
-    const landingCats = document.getElementById('landingCats');
+// ── Element refs ────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const imgEls    = [0,1,2].map(i => $('img'+i));
+const clueEls   = [0,1,2].map(i => $('clue'+i));
+const expTexts  = [0,1,2].map(i => $('expText'+i));
+const posChip   = $('posChip');
+const totalChip = $('totalChip');
+const streakChip= $('streakChip');
+const solvedChip= $('solvedChip');
+const timerChip = $('timerChip');
+const answerEl  = $('answerText');
+const actionsEl = $('answerActions');
+const prevBtn   = $('prevBtn');
+const nextBtn   = $('nextBtn');
+const progBar   = $('progressBar');
+const puzzleCatChip  = $('puzzleCatChip');
+const puzzleCatName  = $('puzzleCatName');
+const catSelectGame   = $('catSelectGame');
+const catSelectLanding = $('catSelectLanding');
 
-    let order = [];
-    let pos = 0;
+// ── Theme ───────────────────────────────────────────────────────
+const SUN  = '☀️';
+const MOON = '🌙';
 
-    // Streak (self-reported)
-    const STREAK_KEY = 'three2one_streak';
-    const BEST_KEY = 'three2one_best';
-    let streak = Number(localStorage.getItem(STREAK_KEY) || 0);
-    let best = Number(localStorage.getItem(BEST_KEY) || 0);
+function applyTheme(t) {
+  document.body.dataset.theme = t;
+  localStorage.setItem('dbd_theme', t);
+  [$('landingThemeBtn'), $('gameThemeBtn')].forEach(btn => {
+    if (btn) btn.textContent = t === 'ink' ? SUN : MOON;
+  });
+}
+applyTheme(document.body.dataset.theme || 'ink');
 
-    // Per puzzle state (session-only; resets on refresh)
-    const revealedOnce = {}; // puzzleId -> true (only used for solved)
-    const solvedOnce = {};   // puzzleId -> true (locks scoring)
-    let scoredThisPuzzle = false;
+[$('landingThemeBtn'), $('gameThemeBtn')].forEach(btn => {
+  if (btn) btn.addEventListener('click', () => {
+    applyTheme(document.body.dataset.theme === 'ink' ? 'paper' : 'ink');
+  });
+});
 
-    function puzzleId() {
-      return order[pos]; // underlying PUZZLES index
+// ── Screen management ───────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(name + 'Screen').classList.add('active');
+}
+
+// ── Sounds (Web Audio) ──────────────────────────────────────────
+let audioCtx = null;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function tone(freq, startTime, dur, vol, type = 'sine') {
+  const ctx = getCtx();
+  const osc  = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(vol, startTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+  osc.start(startTime); osc.stop(startTime + dur + 0.01);
+}
+function playReveal() {
+  try {
+    const t = getCtx().currentTime;
+    tone(520, t,        0.35, 0.18);
+    tone(660, t + 0.08, 0.30, 0.15);
+    tone(780, t + 0.16, 0.28, 0.13);
+  } catch(e) {}
+}
+function playGotIt() {
+  try {
+    const t = getCtx().currentTime;
+    tone(523, t,        0.4, 0.18);
+    tone(659, t + 0.03, 0.4, 0.14);
+    tone(784, t + 0.06, 0.4, 0.12);
+    tone(1047,t + 0.12, 0.5, 0.10);
+  } catch(e) {}
+}
+function playNext() {
+  try {
+    const t = getCtx().currentTime;
+    tone(440, t, 0.12, 0.08, 'triangle');
+  } catch(e) {}
+}
+
+// ── Celebrations ────────────────────────────────────────────────
+const COLORS = ['#a78bfa','#34d399','#f472b6','#fbbf24','#38bdf8','#f87171'];
+
+function celebrate() {
+  const layer = $('celebLayer');
+  layer.innerHTML = '';
+  layer.style.display = 'block';
+  const types = ['burst', 'rain', 'starburst'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  layer.className = 'celebration ' + type;
+
+  if (type === 'burst') {
+    for (let i = 0; i < 48; i++) {
+      const p = document.createElement('div');
+      p.className = 'piece';
+      const angle = (i / 48) * 360 + Math.random() * 15;
+      const dist  = 180 + Math.random() * 280;
+      const rad   = angle * Math.PI / 180;
+      p.style.cssText = `
+        background: ${COLORS[i % COLORS.length]};
+        animation-delay: ${Math.random() * 80}ms;
+        --dx: ${Math.cos(rad) * dist}px;
+        --dy: ${Math.sin(rad) * dist}px;
+        --rot: ${Math.random() * 600 - 300}deg;
+      `;
+      layer.appendChild(p);
     }
-
-    function updateStreakUI() {
-      streakPill.textContent = `Streak: ${streak}`;
-      bestPill.textContent = `Best: ${best}`;
+  } else if (type === 'rain') {
+    for (let i = 0; i < 60; i++) {
+      const p = document.createElement('div');
+      p.className = 'piece';
+      p.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        top: ${-10 - Math.random() * 30}px;
+        background: ${COLORS[i % COLORS.length]};
+        animation-delay: ${Math.random() * 400}ms;
+        animation-duration: ${1400 + Math.random() * 600}ms;
+        --dx: ${(Math.random() - 0.5) * 120}px;
+        --rot: ${Math.random() * 720}deg;
+      `;
+      layer.appendChild(p);
     }
-
-    function setStreak(val) {
-      streak = Math.max(0, Number(val) || 0);
-      localStorage.setItem(STREAK_KEY, String(streak));
-      updateStreakUI();
+  } else {
+    const puff = document.createElement('div');
+    puff.className = 'puff';
+    layer.appendChild(puff);
+    for (let i = 0; i < 14; i++) {
+      const b = document.createElement('div');
+      b.className = 'beam';
+      b.style.setProperty('--ang', (i * 360 / 14) + 'deg');
+      b.style.background = `linear-gradient(to bottom, ${COLORS[i % COLORS.length]}, transparent)`;
+      layer.appendChild(b);
     }
+  }
+  setTimeout(() => { layer.style.display = 'none'; layer.innerHTML = ''; }, 1800);
+}
 
-    function addToStreak() {
-      setStreak(streak + 1);
-      if (streak > best) {
-        best = streak;
-        localStorage.setItem(BEST_KEY, String(best));
-        updateStreakUI();
-      }
-    }
+// ── Milestone banners ───────────────────────────────────────────
+const MILESTONES = [3, 5, 10, 15, 20, 25, 30];
+let shownMilestones = new Set();
 
-    function resetStreak() {
-      setStreak(0);
-    }
+function checkMilestone(s) {
+  if (MILESTONES.includes(s) && !shownMilestones.has(s)) {
+    shownMilestones.add(s);
+    showMilestone(s);
+  }
+}
 
-    function resetRunState() {
-      // Clear per-puzzle session memory (unsolved again)
-      for (const k in solvedOnce) delete solvedOnce[k];
-      for (const k in revealedOnce) delete revealedOnce[k];
-      scoredThisPuzzle = false;
-    }
+function showMilestone(n) {
+  const el = $('milestoneBanner');
+  el.innerHTML = `<span class="ms-num">${n}</span><div><div style="font-size:18px">streak</div><div class="ms-sub">in a row</div></div>`;
+  el.style.display = 'flex';
+  el.className = 'milestone ms-enter';
+  clearTimeout(el._t1); clearTimeout(el._t2);
+  el._t1 = setTimeout(() => { el.className = 'milestone ms-exit'; }, 1700);
+  el._t2 = setTimeout(() => { el.style.display = 'none'; }, 1980);
+}
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
+// ── Timer ───────────────────────────────────────────────────────
+function startTimer() {
+  timerStart = Date.now();
+  clearInterval(timerIv);
+  timerIv = setInterval(() => {
+    if (!timerStart) return;
+    const s = (Date.now() - timerStart) / 1000;
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    timerChip.textContent = m + ':' + String(sec).padStart(2, '0');
+  }, 250);
+}
+function stopTimer() {
+  clearInterval(timerIv);
+  if (timerStart) {
+    puzzleTimes.push((Date.now() - timerStart) / 1000);
+    timerStart = null;
+  }
+}
 
-    function buildOrder() {
+// ── Helpers ─────────────────────────────────────────────────────
+function puzzleId()      { return order[pos]; }
+function currentPuzzle() { return PUZZLES[order[pos]]; }
+function isRevealed()    { return document.body.classList.contains('reveal-on'); }
+
+function shuffle(a) {
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function buildOrder() {
   order = [...Array(PUZZLES.length).keys()];
   shuffle(order);
   pos = 0;
 }
 
-    function currentPuzzle() {
-      return PUZZLES[order[pos]];
+function fmtTime(s) {
+  if (!s) return '—';
+  if (s < 60) return Math.round(s) + 's';
+  return Math.floor(s / 60) + 'm' + String(Math.round(s % 60)).padStart(2, '0') + 's';
+}
+
+// ── UI updates ──────────────────────────────────────────────────
+function updateStreak() {
+  streakChip.textContent = streak;
+  localStorage.setItem('dbd_streak', streak);
+  if (streak > best) { best = streak; localStorage.setItem('dbd_best', best); }
+  if (streak > sessionBestStreak) sessionBestStreak = streak;
+}
+function updateSolved() { solvedChip.textContent = Object.keys(solvedOnce).length; }
+function updateNav() {
+  posChip.textContent   = pos + 1;
+  totalChip.textContent = order.length;
+  progBar.style.width   = ((pos + 1) / order.length * 100) + '%';
+  prevBtn.disabled = (pos === 0);
+}
+
+function isRTL(text) {
+  return /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/.test(text);
+}
+
+function renderAnswerHidden() {
+  answerEl.dir = '';
+  answerEl.innerHTML = '<span class="caret"></span>';
+}
+
+function renderAnswerRevealed(answer) {
+  answerEl.innerHTML = '';
+  if (isRTL(answer)) {
+    answerEl.dir = 'rtl';
+    const span = document.createElement('span');
+    span.className = 'ch';
+    span.textContent = answer;
+    answerEl.appendChild(span);
+  } else {
+    answerEl.dir = '';
+    let delay = 0;
+    for (let i = 0; i < answer.length; i++) {
+      const ch = document.createElement('span');
+      ch.className = answer[i] === ' ' ? 'ch sp' : 'ch';
+      ch.textContent = answer[i] === ' ' ? ' ' : answer[i];
+      ch.style.animationDelay = delay + 'ms';
+      delay += answer[i] === ' ' ? 0 : 28;
+      answerEl.appendChild(ch);
     }
-
-    function waitForVisibleImages() {
-      const promises = imgEls.map(img => new Promise(resolve => {
-        if (img.complete && img.naturalWidth > 0) return resolve();
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-      }));
-      return Promise.all(promises);
-    }
-
-    function preloadPuzzle(p) {
-      if (!p) return Promise.resolve([]);
-
-      const key = p.answer + "|" + (p.clues || []).join("|");
-
-      if (preloadCache.has(key)) {
-        return preloadCache.get(key).promise;
-      }
-
-      const urls = (p.clues || []).map(path => "{{ url_for('static', filename='') }}" + path);
-
-      const images = urls.map(url => {
-        const im = new Image();
-        im.src = url;
-        return im;
-      });
-
-      const promise = Promise.all(
-        images.map(im => new Promise(resolve => {
-          if (im.complete && im.naturalWidth > 0) {
-            resolve({ ok: true, img: im });
-            return;
-          }
-          im.onload = () => resolve({ ok: true, img: im });
-          im.onerror = () => resolve({ ok: false, img: im });
-        }))
-      );
-
-      preloadCache.set(key, {
-        key,
-        urls,
-        images,
-        promise
-      });
-
-      return promise;
-    }
-
-    function puzzleCacheKey(p) {
-      return p.answer + "|" + (p.clues || []).join("|");
-    }
-
-    function isPuzzlePreloaded(p) {
-      const key = puzzleCacheKey(p);
-      const cached = preloadCache.get(key);
-      if (!cached) return false;
-
-      return cached.images.every(im => im.complete && im.naturalWidth > 0);
-    }
-
-function clearImagesImmediately() {
-  for (let i = 0; i < 3; i++) {
-    imgEls[i].classList.remove('is-visible');
-    imgEls[i].removeAttribute('src');
-    expEls[i].textContent = "";
   }
 }
-    
-    function isRevealed() {
-      return document.body.classList.contains('reveal-on');
+
+function renderActions() {
+  actionsEl.innerHTML = '';
+  const id = puzzleId();
+  if (!isRevealed()) {
+    const btn = document.createElement('button');
+    btn.className = 'btn accent';
+    btn.innerHTML = `Reveal <span class="kbd">SPACE</span>`;
+    btn.onclick = doReveal;
+    actionsEl.appendChild(btn);
+  } else {
+    if (!solvedOnce[id]) {
+      const gotIt = document.createElement('button');
+      gotIt.className = scoredThisPuzzle ? 'btn toggled-on' : 'btn primary';
+      gotIt.id = 'gotItBtn';
+      gotIt.innerHTML = scoredThisPuzzle
+        ? `✓ Got it! <span class="kbd">SPACE</span>`
+        : `I got it <span class="kbd">SPACE</span>`;
+      gotIt.onclick = doToggleGotIt;
+      actionsEl.appendChild(gotIt);
     }
-
-    function updatePrevEnabled() {
-      prevBtn.disabled = (pos === 0);
-      prevBtn.classList.toggle('is-disabled', prevBtn.disabled);
-    }
-
-    function setRevealState(on) {
-      document.body.classList.toggle('reveal-on', on);
-
-      if (on) {
-        answerText.textContent = currentPuzzle().answer || "";
-        answerCard.classList.add('visible');
-
-        nextBtn.disabled = false;
-        gotItBtn.disabled = false;
-
-        revealBtn.textContent = "Revealed";
-        revealBtn.disabled = true;
-      } else {
-        answerText.textContent = "";
-        answerCard.classList.remove('visible');
-
-        nextBtn.disabled = true;
-        gotItBtn.disabled = true;
-
-        revealBtn.textContent = "Reveal";
-        revealBtn.disabled = false;
-      }
-
-      updatePrevEnabled();
-    }
-
-    function updateNavUI() {
-      const atEnd = (pos === order.length - 1);
-      nextBtn.textContent = atEnd ? "Restart ↻" : "Next →";
-      progressPill.textContent = `${pos + 1} / ${order.length}`;
-      updatePrevEnabled();
-    }
-
-    // If user leaves a puzzle after revealing but NOT solving, clear that reveal.
-    // If user solved it, persist as solved (auto-reveal on revisit, no re-score).
-    function persistStateOnLeave() {
-      const id = puzzleId();
-
-      if (isRevealed() && !scoredThisPuzzle && !solvedOnce[id]) {
-        revealedOnce[id] = false;
-      }
-
-      if (scoredThisPuzzle) {
-        solvedOnce[id] = true;
-        revealedOnce[id] = true;
-      }
-    }
-
-async function renderPuzzle({ showLoader = false } = {}) {
-  const renderToken = ++activeRenderToken;
-  const p = currentPuzzle();
-  const atEnd = (pos === order.length - 1);
-
-  clearImagesImmediately();
-
-  if (showLoader) {
-    loader.classList.add('show');
+    const nxt = document.createElement('button');
+    nxt.className = 'btn';
+    const atEnd = (pos === order.length - 1);
+    nxt.innerHTML = atEnd ? 'See results →' : `Next <span class="kbd">→</span>`;
+    nxt.onclick = doNext;
+    actionsEl.appendChild(nxt);
   }
+}
+
+function updatePuzzleCat() {
+  if (MODE === 'Random') {
+    const cat = currentPuzzle().category || '';
+    puzzleCatName.textContent = cat;
+    puzzleCatChip.style.display = cat ? 'flex' : 'none';
+  } else {
+    puzzleCatChip.style.display = 'none';
+  }
+}
+
+// ── Preloading ──────────────────────────────────────────────────
+function cacheKey(p) { return p.answer + '|' + (p.clues||[]).join('|'); }
+
+function preload(p) {
+  if (!p) return Promise.resolve();
+  const k = cacheKey(p);
+  if (preloadCache.has(k)) return preloadCache.get(k).promise;
+  const urls   = (p.clues||[]).map(c => STATIC_PREFIX + c);
+  const images = urls.map(u => { const im = new Image(); im.src = u; return im; });
+  const promise = Promise.all(images.map(im => new Promise(r => {
+    if (im.complete && im.naturalWidth > 0) return r();
+    im.onload = r; im.onerror = r;
+  })));
+  preloadCache.set(k, { urls, images, promise });
+  return promise;
+}
+
+// ── Reveal state ────────────────────────────────────────────────
+function setRevealed(on) {
+  document.body.classList.toggle('reveal-on', on);
+  const p = currentPuzzle();
+  if (on) {
+    renderAnswerRevealed(p.answer);
+    clueEls.forEach(c => c.classList.add('revealed'));
+  } else {
+    renderAnswerHidden();
+    clueEls.forEach(c => c.classList.remove('revealed'));
+  }
+  renderActions();
+  prevBtn.disabled = (pos === 0);
+  nextBtn.disabled = !on;
+}
+
+// ── Render puzzle ───────────────────────────────────────────────
+async function renderPuzzle() {
+  const token = ++renderToken;
 
   scoredThisPuzzle = false;
-  gotItBtn.classList.remove('is-on');
+  document.body.classList.remove('reveal-on');
+  clueEls.forEach(c => { c.classList.remove('revealed'); });
+  imgEls.forEach((img, i) => { img.classList.remove('loaded'); img.removeAttribute('src'); expTexts[i].textContent = ''; });
 
-  setRevealState(false);
+  updateNav();
+  updatePuzzleCat();
 
-  const key = puzzleCacheKey(p);
-  let cached = preloadCache.get(key);
+  renderAnswerHidden();
+  renderActions();
+  nextBtn.disabled = true;
+  prevBtn.disabled = (pos === 0);
 
-  if (!cached) {
-    await preloadPuzzle(p);
-    cached = preloadCache.get(key);
-  }
+  startTimer();
 
+  const p = currentPuzzle();
+  const k = cacheKey(p);
+  if (!preloadCache.has(k)) preload(p);
+  const cached = preloadCache.get(k);
   await cached.promise;
-
-  if (renderToken !== activeRenderToken) return;
-
-  for (let i = 0; i < 3; i++) {
-    imgEls[i].src = cached.urls[i] || "";
-  }
-
-  await waitForVisibleImages();
-
-  if (renderToken !== activeRenderToken) return;
+  if (token !== renderToken) return;
 
   for (let i = 0; i < 3; i++) {
-    expEls[i].textContent = (p.explanations && p.explanations[i]) ? p.explanations[i] : "";
+    imgEls[i].src = cached.urls[i] || '';
+    expTexts[i].textContent = (p.explanations && p.explanations[i]) || '';
   }
+
+  await Promise.all(imgEls.map(img => new Promise(r => {
+    if (img.complete && img.naturalWidth > 0) return r();
+    img.onload = r; img.onerror = r;
+  })));
+  if (token !== renderToken) return;
 
   requestAnimationFrame(() => {
-    if (renderToken !== activeRenderToken) return;
-
-    for (let i = 0; i < 3; i++) {
-      imgEls[i].classList.add('is-visible');
-    }
+    if (token !== renderToken) return;
+    imgEls.forEach(img => img.classList.add('loaded'));
   });
 
-  const id = puzzleId();
-  if (solvedOnce[id]) {
-    setRevealState(true);
-    gotItBtn.disabled = true;
-    gotItBtn.textContent = "Solved";
-    gotItBtn.classList.remove('is-on');
+  if (solvedOnce[puzzleId()]) {
+    stopTimer();
+    setRevealed(true);
     scoredThisPuzzle = true;
-  } else {
-    gotItBtn.textContent = "I got it";
+    renderActions();
   }
 
-  updateNavUI();
-
-  const nextPos = atEnd ? 0 : (pos + 1);
-  preloadPuzzle(PUZZLES[order[nextPos]]);
-
-  loader.classList.remove('show');
+  const atEnd = (pos === order.length - 1);
+  preload(PUZZLES[order[atEnd ? 0 : pos + 1]]);
 }
-    
-    function toggleGotIt() {
-      if (!isRevealed()) return;
 
-      const id = puzzleId();
-      if (solvedOnce[id]) return;
+// ── Game actions ────────────────────────────────────────────────
+function doReveal() {
+  if (isRevealed() || solvedOnce[puzzleId()]) return;
+  stopTimer();
+  totalRevealed++;
+  setRevealed(true);
+  playReveal();
+}
 
-      if (!scoredThisPuzzle) {
-        scoredThisPuzzle = true;
-        addToStreak();
-        gotItBtn.textContent = "✓ Dablyou";
-        gotItBtn.classList.add('is-on');
-      } else {
-        scoredThisPuzzle = false;
-        setStreak(streak - 1);
-        gotItBtn.textContent = "I got it";
-        gotItBtn.classList.remove('is-on');
-      }
-    }
+function doToggleGotIt() {
+  if (!isRevealed() || solvedOnce[puzzleId()]) return;
+  if (!scoredThisPuzzle) {
+    scoredThisPuzzle = true;
+    streak++;
+    updateStreak();
+    updateSolved();
+    checkMilestone(streak);
+    celebrate();
+    playGotIt();
+  } else {
+    scoredThisPuzzle = false;
+    streak = Math.max(0, streak - 1);
+    updateStreak();
+  }
+  renderActions();
+}
 
-    // Buttons
-    revealBtn.addEventListener('click', () => {
-      const id = puzzleId();
-      if (solvedOnce[id]) return;
-      if (isRevealed()) return;
-      setRevealState(true);
-      updateNavUI();
-    });
+function persistOnLeave() {
+  const id = puzzleId();
+  if (isRevealed() && scoredThisPuzzle) solvedOnce[id] = true;
+  else if (isRevealed() && !scoredThisPuzzle && !solvedOnce[id]) {
+    streak = 0; updateStreak();
+  }
+}
 
-    gotItBtn.addEventListener('click', () => {
-      if (gotItBtn.disabled) return;
-      toggleGotIt();
-    });
+function doNext() {
+  if (!isRevealed()) return;
+  persistOnLeave();
+  playNext();
+  const atEnd = (pos === order.length - 1);
+  if (atEnd) {
+    showEndScreen();
+  } else {
+    pos++;
+    renderPuzzle();
+  }
+}
 
-    prevBtn.addEventListener('click', () => {
-      if (pos === 0) return;
+function doPrev() {
+  if (pos === 0) return;
+  persistOnLeave();
+  pos--;
+  renderPuzzle();
+}
 
-      persistStateOnLeave();
-      pos -= 1;
+// ── End screen ──────────────────────────────────────────────────
+function grade(solved, total) {
+  const p = total > 0 ? solved / total : 0;
+  if (p === 1)   return { g: 'Genius.',        s: `Perfect. You got every single one.` };
+  if (p >= 0.8)  return { g: 'Sharp.',         s: `${solved} out of ${total}. Genuinely impressive.` };
+  if (p >= 0.6)  return { g: 'Decent.',        s: `${solved} out of ${total}. Room to improve.` };
+  if (p >= 0.4)  return { g: 'Getting there.', s: `${solved} out of ${total}. Keep at it.` };
+  if (p >= 0.2)  return { g: 'Rough.',         s: `${solved} out of ${total}. Yikes.` };
+  return               { g: 'Yikes.',          s: `${solved} out of ${total}. Did you even try?` };
+}
 
-      const nextPuzzle = currentPuzzle();
-      renderPuzzle({ showLoader: !isPuzzlePreloaded(nextPuzzle) });
-    });
+function showEndScreen() {
+  clearInterval(timerIv);
+  const solved    = Object.keys(solvedOnce).length + (scoredThisPuzzle ? 1 : 0);
+  const total     = order.length;
+  const totalSecs = puzzleTimes.reduce((a, b) => a + b, 0);
+  const avgTime   = puzzleTimes.length ? totalSecs / puzzleTimes.length : null;
 
-    nextBtn.addEventListener('click', () => {
-      if (!isRevealed()) return;
+  const { g, s } = grade(solved, total);
+  $('endGrade').textContent    = g;
+  $('endSubtitle').textContent = s;
+  $('endSolved').textContent   = solved + '/' + total;
+  $('endBest').textContent     = sessionBestStreak;
+  $('endAvgTime').textContent  = fmtTime(avgTime);
+  $('endTotalTime').textContent = fmtTime(totalSecs || null);
+  showScreen('end');
+}
 
-      persistStateOnLeave();
+// ── Quit modal ───────────────────────────────────────────────────
+function goHome() {
+  clearInterval(timerIv);
+  solvedOnce = {}; scoredThisPuzzle = false;
+  puzzleTimes = []; totalRevealed = 0;
+  shownMilestones = new Set();
+  sessionBestStreak = 0;
+  updateSolved(); updateStreak();
+  showScreen('landing');
+}
 
-      const id = puzzleId();
-      const isSolvedRevisit = solvedOnce[id] && scoredThisPuzzle;
-      if (!scoredThisPuzzle && !isSolvedRevisit) resetStreak();
+function openQuitModal() {
+  $('quitOverlay').style.display = 'flex';
+}
+function closeQuitModal() {
+  $('quitOverlay').style.display = 'none';
+}
 
-      const atEnd = (pos === order.length - 1);
-      if (atEnd) {
-        resetStreak();
-        resetRunState();
-        buildOrder(catValue.textContent.trim());
-      } else {
-        pos += 1;
-      }
+$('gameBrand').addEventListener('click', openQuitModal);
+$('quitConfirmBtn').addEventListener('click', () => { closeQuitModal(); goHome(); });
+$('quitCancelBtn').addEventListener('click', closeQuitModal);
+$('quitOverlay').addEventListener('click', e => { if (e.target === $('quitOverlay')) closeQuitModal(); });
 
-      const nextPuzzle = currentPuzzle();
-      renderPuzzle({ showLoader: !isPuzzlePreloaded(nextPuzzle) });
-    });
+// ── Home button ─────────────────────────────────────────────────
+$('homeBtn').addEventListener('click', () => {
+  solvedOnce = {}; scoredThisPuzzle = false;
+  puzzleTimes = []; totalRevealed = 0;
+  shownMilestones = new Set();
+  sessionBestStreak = 0;
+  updateSolved(); updateStreak();
+  showScreen('landing');
+});
 
-    // Dropdown
-    function openMenu() {
-      catDropdown.classList.add('open');
-      catBtn.setAttribute('aria-expanded', 'true');
-      catMenu.focus();
-    }
-    function closeMenu() {
-      catDropdown.classList.remove('open');
-      catBtn.setAttribute('aria-expanded', 'false');
-    }
+// ── Category changes ─────────────────────────────────────────────
+catSelectLanding.addEventListener('change', e => {
+  window.location.href = '/?cat=' + encodeURIComponent(e.target.value);
+});
+catSelectGame.addEventListener('change', e => {
+  sessionStorage.setItem('dbd_skip_landing', '1');
+  window.location.href = '/?cat=' + encodeURIComponent(e.target.value);
+});
 
-    catBtn.addEventListener('click', () => {
-      if (catDropdown.classList.contains('open')) closeMenu();
-      else openMenu();
-    });
+// ── Nav buttons ─────────────────────────────────────────────────
+prevBtn.addEventListener('click', doPrev);
+nextBtn.addEventListener('click', doNext);
 
-    catMenu.addEventListener('click', (e) => {
-      const item = e.target.closest('.dropdown-item');
-      if (!item) return;
+// ── Keyboard ────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = e.target ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
-      const selected = item.getAttribute('data-category');
-      catValue.textContent = selected;
-      closeMenu();
+  if (e.code === 'Space') {
+    e.preventDefault();
+    const ls = $('landingScreen');
+    if (ls.classList.contains('active')) { doStart(); return; }
+    if (!isRevealed()) doReveal();
+    else doToggleGotIt();
+    return;
+  }
+  if (e.key === 'ArrowRight' && isRevealed()) { doNext(); return; }
+  if (e.key === 'ArrowLeft'  && !prevBtn.disabled) { doPrev(); return; }
+  if (e.key.toLowerCase() === 'g' && isRevealed() && !solvedOnce[puzzleId()]) { doToggleGotIt(); }
+});
 
-      sessionStorage.setItem("three2one_skip_landing_once", "1");
-      window.location.href = "/?cat=" + encodeURIComponent(selected);
-    });
+// ── Start ────────────────────────────────────────────────────────
+function doStart() {
+  buildOrder();
+  sessionBestStreak = 0;
+  puzzleTimes = []; totalRevealed = 0;
+  solvedOnce = {}; scoredThisPuzzle = false;
+  shownMilestones = new Set();
+  updateStreak();
+  updateSolved();
+  totalChip.textContent = order.length;
+  progBar.style.width = '0%';
+  showScreen('game');
+  renderPuzzle();
+}
 
-    document.addEventListener('click', (e) => {
-      if (!catDropdown.contains(e.target)) closeMenu();
-    });
+$('startBtn').addEventListener('click', doStart);
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === "Escape") closeMenu();
-    });
+// ── Init ─────────────────────────────────────────────────────────
+if (window.location.search.includes('cat=')) {
+  history.replaceState(null, '', '/');
+}
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      if (catDropdown.classList.contains('open')) return;
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        const id = puzzleId();
-        if (!isRevealed()) {
-          if (!solvedOnce[id]) revealBtn.click();
-        } else {
-          if (!solvedOnce[id]) toggleGotIt();
-        }
-        return;
-      }
-
-      if (e.key === 'ArrowRight') {
-        if (isRevealed()) nextBtn.click();
-        return;
-      }
-
-      if (e.key === 'ArrowLeft') {
-        if (!prevBtn.disabled) prevBtn.click();
-        return;
-      }
-
-      if (e.key.toLowerCase() === 'g') {
-        const id = puzzleId();
-        if (isRevealed() && !solvedOnce[id]) toggleGotIt();
-        return;
-      }
-    });
-
-    // Theme toggle
-    function applyTheme(theme) {
-      if (theme === "dark") {
-        document.body.classList.add("dark");
-        themeToggle.textContent = "☀️";
-      } else {
-        document.body.classList.remove("dark");
-        themeToggle.textContent = "🌙";
-      }
-    }
-
-    const savedTheme = localStorage.getItem("three2one_theme") || "dark";
-    applyTheme(savedTheme);
-
-    themeToggle.addEventListener('click', () => {
-      const isDark = document.body.classList.toggle("dark");
-      const next = isDark ? "dark" : "light";
-      localStorage.setItem("three2one_theme", next);
-      applyTheme(next);
-    });
-
-    // Landing overlay controls
-    function startGame() {
-      document.body.classList.remove('prestart');
-      landing.classList.add('hidden');
-      renderPuzzle({ showLoader: true });
-    }
-
-    // Init
-    buildOrder();
-    catValue.textContent = MODE;
-    if (window.location.search.includes("cat=")) {
-      history.replaceState(null, "", "/");
-    }
-    updateStreakUI();
-
-    const skipLandingOnce = sessionStorage.getItem("three2one_skip_landing_once") === "1";
-    if (skipLandingOnce) {
-      sessionStorage.removeItem("three2one_skip_landing_once");
-      document.body.classList.remove('prestart');
-      landing.classList.add('hidden');
-      renderPuzzle({ showLoader: true });
-    } else {
-      document.body.classList.add('prestart');
-      loader.classList.remove('show');
-      // don't renderPuzzle until Start
-    }
-
-    startBtn.addEventListener('click', startGame);
-
-    openCatBtn.addEventListener('click', () => landingCats.classList.toggle('hidden'));
-
-    landingCats.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-cat]');
-      if (!btn) return;
-      const selected = btn.getAttribute('data-cat');
-      sessionStorage.setItem("three2one_skip_landing_once", "1");
-      window.location.href = "/?cat=" + encodeURIComponent(selected);
-    });
-  </script>
-
-  <style>
-    /* Prev button readability */
-    .prev-button {
-      background: rgba(255,255,255,0.85) !important;
-      color: #24364b !important;
-      border: 1px solid rgba(36,54,75,0.18) !important;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.10) !important;
-    }
-    .prev-button:hover {
-      filter: none !important;
-      background: rgba(255,255,255,0.95) !important;
-    }
-    .prev-button.is-disabled,
-    .prev-button:disabled {
-      opacity: 0.45 !important;
-      cursor: not-allowed !important;
-      transform: none !important;
-      box-shadow: 0 6px 14px rgba(0,0,0,0.08) !important;
-    }
-
-    /* Stable layout */
-    .progress-row { gap: 10px; flex-wrap: wrap; justify-content: center; }
-    .progress-top { margin-top: 10px; margin-bottom: 10px; }
-    .progress-bottom { margin-top: 10px; }
-
-    .gotit-inline { min-width: 160px; }
-    .gotit-inline:disabled { opacity: 0.55; cursor: not-allowed; }
-
-    /* Next button = blue (distinct from green got-it) */
-    .next-primary{
-      background: rgba(59, 130, 246, 0.92) !important;
-      color: #fff !important;
-      border: 1px solid rgba(59, 130, 246, 0.55) !important;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.10) !important;
-    }
-    .next-primary:hover{
-      background: rgba(59, 130, 246, 1) !important;
-    }
-    .next-primary:disabled{
-      opacity: 0.45 !important;
-      cursor: not-allowed !important;
-      transform: none !important;
-    }
-
-    /* Got-it clicked state */
-    .gotit-inline.is-on{
-      background: rgba(34, 197, 94, 0.65) !important;
-      border: 1px solid rgba(34, 197, 94, 0.45) !important;
-      filter: saturate(0.95) !important;
-    }
-
-    /* Landing overlay */
-    .landing-overlay{
-      position: fixed;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      z-index: 1200;
-      background: rgba(10, 14, 24, 0.18);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    body.dark .landing-overlay{ background: rgba(0,0,0,0.35); }
-    .landing-overlay.hidden{ display:none; }
-    .landing-card{
-      width: min(760px, 92vw);
-      padding: 22px 22px 18px;
-      text-align: center;
-    }
-    .landing-title{
-      font-size: 1.55rem;
-      font-weight: 950;
-      margin-top: 10px;
-    }
-    .landing-sub{
-      margin-top: 10px;
-      font-size: 1.02rem;
-      opacity: 0.9;
-    }
-    .landing-flow{
-      margin: 16px auto 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      opacity: 0.9;
-    }
-    .landing-flow .dot{
-      width: 14px;
-      height: 14px;
-      border-radius: 999px;
-      background: rgba(111,66,193,0.55);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-    }
-    body.dark .landing-flow .dot{ background: rgba(111,66,193,0.75); }
-    .landing-flow .arrow{ font-weight: 950; opacity: 0.85; }
-    .landing-flow .one{
-      width: 28px;
-      height: 28px;
-      border-radius: 10px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 950;
-      background: rgba(32,201,151,0.22);
-      box-shadow: inset 0 0 0 1px rgba(32,201,151,0.35);
-    }
-    body.dark .landing-flow .one{
-      background: rgba(32,201,151,0.18);
-      box-shadow: inset 0 0 0 1px rgba(32,201,151,0.28);
-    }
-    .landing-bullets{
-      margin: 14px auto 0;
-      padding: 0;
-      list-style: none;
-      display: grid;
-      gap: 8px;
-      font-weight: 850;
-      opacity: 0.95;
-    }
-    .landing-actions{ margin-top: 16px; }
-    .landing-cats{ margin-top: 12px; }
-    .landing-cats.hidden{ display:none; }
-    .landing-cats-row{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    .landing-note{
-      margin-top: 10px;
-      font-size: 0.9rem;
-      opacity: 0.75;
-    }
-
-    /* Hide game content until Start */
-    body.prestart .category-row,
-    body.prestart .clues,
-    body.prestart .action-area{
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    /* Ensure dropdown chevron is visible in dark mode */
-    body.dark .dropdown-chevron{ opacity: 0.95; }
-  </style>
+if (sessionStorage.getItem('dbd_skip_landing') === '1') {
+  sessionStorage.removeItem('dbd_skip_landing');
+  doStart();
+} else {
+  showScreen('landing');
+}
+</script>
 </body>
 </html>
